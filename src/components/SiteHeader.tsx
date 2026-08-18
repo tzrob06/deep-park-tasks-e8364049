@@ -14,7 +14,7 @@ export function SiteHeader() {
               DEEP Park Maintenance
             </span>
             <span className="block text-xs text-muted-foreground">
-              Southford Falls &middot; Kettletown &middot; Larkin
+              Southford Falls &middot; Kettletown
             </span>
           </span>
         </Link>
