@@ -3,7 +3,7 @@ name: Deploy Vite Site
 on:
   push:
     branches:
-      - main  # Change to master if your default branch is master
+      - main  # Change to master if your default branch is masters
 
 permissions:
   contents: read
