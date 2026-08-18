@@ -49,6 +49,9 @@ function TaskBoard() {
     return { id: category.id, total: all.length, done };
   });
   const activeCount = counts.find((count) => count.id === activeId)!;
+  const removedCount = store.state.removed.filter((key) =>
+    key.startsWith(`${activeId}::`),
+  ).length;
   const totalDone = counts.reduce((sum, count) => sum + count.done, 0);
   const totalAll = counts.reduce((sum, count) => sum + count.total, 0);
 
@@ -77,11 +80,14 @@ function TaskBoard() {
               >
                 Crew member on shift
               </label>
+              <p className="sr-only">
+                Optional. The name entered here is stamped on each task you check off.
+              </p>
               <Input
                 id="crew"
                 value={store.state.crew}
                 onChange={(event) => store.setCrew(event.target.value)}
-                placeholder="Your name"
+                placeholder="Optional — stamps your name on completed tasks"
                 className="mt-1"
               />
             </div>
@@ -152,7 +158,7 @@ function TaskBoard() {
                 onClick={() => store.resetCategory(activeId)}
                 disabled={activeCount.done === 0}
               >
-                <RotateCcw /> Reset
+                <RotateCcw /> Uncheck all
               </Button>
             </div>
           </div>
@@ -191,16 +197,15 @@ function TaskBoard() {
                       </span>
                     ) : null}
                   </label>
-                  {store.isCustom(activeId, task) ? (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`Remove ${task}`}
-                      onClick={() => store.removeTask(activeId, task)}
-                    >
-                      <Trash2 />
-                    </Button>
-                  ) : null}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Remove ${task}`}
+                    className="text-muted-foreground hover:text-destructive"
+                    onClick={() => store.removeTask(activeId, task)}
+                  >
+                    <Trash2 />
+                  </Button>
                 </li>
               );
             })}
@@ -210,6 +215,15 @@ function TaskBoard() {
               </li>
             ) : null}
           </ul>
+
+          {removedCount > 0 ? (
+            <p className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+              {removedCount} task{removedCount === 1 ? "" : "s"} removed from this list.
+              <Button variant="link" size="sm" onClick={() => store.restoreRemoved(activeId)}>
+                Restore them
+              </Button>
+            </p>
+          ) : null}
 
           <form
             className="mt-5 flex gap-2 border-t border-border pt-5"

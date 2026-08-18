@@ -7,10 +7,12 @@ export type Completion = { at: string; by: string };
 export type StoreState = {
   completed: Record<string, Completion>;
   custom: Record<string, string[]>;
+  /** Keys of built-in tasks the crew has removed from the list. */
+  removed: string[];
   crew: string;
 };
 
-const EMPTY: StoreState = { completed: {}, custom: {}, crew: "" };
+const EMPTY: StoreState = { completed: {}, custom: {}, removed: [], crew: "" };
 
 export const taskKey = (categoryId: string, task: string) => `${categoryId}::${task}`;
 export const todayKey = () => new Date().toISOString().slice(0, 10);
@@ -82,27 +84,41 @@ export function useTaskStore() {
 
   const removeTask = useCallback((categoryId: string, task: string) => {
     setState((prev) => {
+      const key = taskKey(categoryId, task);
       const completed = { ...prev.completed };
-      delete completed[taskKey(categoryId, task)];
+      delete completed[key];
+      const isCustom = (prev.custom[categoryId] ?? []).includes(task);
       return {
         ...prev,
         completed,
-        custom: {
-          ...prev.custom,
-          [categoryId]: (prev.custom[categoryId] ?? []).filter((item) => item !== task),
-        },
+        custom: isCustom
+          ? {
+              ...prev.custom,
+              [categoryId]: (prev.custom[categoryId] ?? []).filter((item) => item !== task),
+            }
+          : prev.custom,
+        removed: isCustom || prev.removed.includes(key) ? prev.removed : [...prev.removed, key],
       };
     });
+  }, []);
+
+  const restoreRemoved = useCallback((categoryId: string) => {
+    setState((prev) => ({
+      ...prev,
+      removed: prev.removed.filter((key) => !key.startsWith(`${categoryId}::`)),
+    }));
   }, []);
 
   const setCrew = useCallback((crew: string) => setState((prev) => ({ ...prev, crew })), []);
 
   const tasksFor = useCallback(
     (categoryId: string) => {
-      const base = CATEGORIES.find((category) => category.id === categoryId)?.tasks ?? [];
+      const base = (CATEGORIES.find((category) => category.id === categoryId)?.tasks ?? []).filter(
+        (task) => !state.removed.includes(taskKey(categoryId, task)),
+      );
       return [...base, ...(state.custom[categoryId] ?? [])];
     },
-    [state.custom],
+    [state.custom, state.removed],
   );
 
   const isCustom = useCallback(
@@ -117,6 +133,7 @@ export function useTaskStore() {
     resetCategory,
     addTask,
     removeTask,
+    restoreRemoved,
     setCrew,
     tasksFor,
     isCustom,
