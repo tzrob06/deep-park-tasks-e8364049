@@ -31,7 +31,7 @@ export const Route = createFileRoute("/")({
 
 function TaskBoard() {
   const store = useTaskStore();
-  const [activeId, setActiveId] = useState(CATEGORIES[0].id);
+  const [activeId, setActiveId] = useState(CATEGORIES[0]!.id);
   const [query, setQuery] = useState("");
   const [newTask, setNewTask] = useState("");
 
