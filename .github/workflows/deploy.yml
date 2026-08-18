@@ -3,7 +3,7 @@ name: Deploy Vite Site
 on:
   push:
     branches:
-      - main  # Change to master if your default branch is masters
+      - main  # Change to master if your default branch is master
 
 permissions:
   contents: read
@@ -24,10 +24,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          # ❌ Removed the 'cache: npm' line that caused the error
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install # 👈 Changed from 'npm ci' to 'npm install' so it works without a lockfile
 
       - name: Build project
         run: npm run build
@@ -35,7 +35,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist' # This targets the newly compiled HTML folder
+          path: './dist'
 
       - name: Deploy to GitHub Pages
         id: deployment
