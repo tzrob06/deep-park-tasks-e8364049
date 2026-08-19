@@ -1,16 +1,16 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { CheckCircle2, Plus, RotateCcw, Search, Trash2 } from "lucide-react";
 import { CATEGORIES } from "@/data/tasks";
 import { SiteHeader } from "@/components/SiteHeader";
+import { ParkPicker } from "@/components/ParkPicker";
 import { useTaskStore, taskKey } from "@/lib/task-store";
+import { useParks } from "@/lib/park-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { getParkSession } from "@/lib/gate.functions";
-import { parkName } from "@/data/parks";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Daily, weekly and seasonal maintenance checklist for CT DEEP park crews at Southford Falls, Kettletown, Larkin and the reservoirs.",
+          "Daily, weekly and seasonal maintenance checklist for CT DEEP park crews, tracked park by park.",
       },
       { property: "og:title", content: "DEEP Park Maintenance Task Board" },
       {
@@ -28,16 +28,44 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
-  loader: async () => {
-    const { parkId } = await getParkSession();
-    if (!parkId) throw redirect({ to: "/unlock" });
-    return { parkId };
-  },
-  component: TaskBoard,
+  component: ParkGate,
 });
 
-function TaskBoard() {
-  const { parkId } = Route.useLoaderData();
+function ParkGate() {
+  const parks = useParks();
+
+  if (!parks.hydrated) return <div className="min-h-screen topo-bg" />;
+
+  if (!parks.selected) {
+    return (
+      <ParkPicker
+        parks={parks.parks}
+        onSelect={parks.select}
+        onAdd={parks.addPark}
+        onRemove={parks.removePark}
+      />
+    );
+  }
+
+  return (
+    <TaskBoard
+      key={parks.selected}
+      parkId={parks.selected}
+      parkLabel={parks.nameFor(parks.selected)}
+      onSwitchPark={() => parks.select(null)}
+    />
+  );
+}
+
+function TaskBoard({
+  parkId,
+  parkLabel,
+  onSwitchPark,
+}: {
+  parkId: string;
+  parkLabel: string;
+  onSwitchPark: () => void;
+}) {
   const store = useTaskStore(parkId);
   const [activeId, setActiveId] = useState(CATEGORIES[0]!.id);
   const [query, setQuery] = useState("");
@@ -65,7 +93,8 @@ function TaskBoard() {
 
   return (
     <div className="min-h-screen topo-bg">
-      <SiteHeader parkId={parkId} />
+      <SiteHeader parkLabel={parkLabel} onSwitchPark={onSwitchPark} />
+
 
       <main className="mx-auto max-w-6xl px-4 py-8">
         <section className="rounded-xl border border-border bg-card p-6 shadow-panel">
