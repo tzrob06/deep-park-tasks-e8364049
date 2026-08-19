@@ -107,7 +107,7 @@ function TaskBoard({
                   month: "long",
                   day: "numeric",
                 })}{" "}
-                &middot; {parkName(parkId)} &middot; daily tasks clear automatically each morning
+                &middot; {parkLabel} &middot; daily tasks clear automatically each morning
               </p>
             </div>
             <div className="w-full max-w-xs">
