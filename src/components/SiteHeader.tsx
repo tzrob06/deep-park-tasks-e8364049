@@ -1,7 +1,14 @@
-import { Link } from "@tanstack/react-router";
-import { TreePine } from "lucide-react";
+import { Link, useRouter } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { LogOut, TreePine } from "lucide-react";
+import { parkName } from "@/data/parks";
+import { lockPark } from "@/lib/gate.functions";
+import { Button } from "@/components/ui/button";
 
-export function SiteHeader() {
+export function SiteHeader({ parkId }: { parkId?: string }) {
+  const router = useRouter();
+  const lock = useServerFn(lockPark);
+
   return (
     <header className="sticky top-0 z-30 border-b border-border/70 bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
@@ -14,10 +21,22 @@ export function SiteHeader() {
               DEEP Park Maintenance
             </span>
             <span className="block text-xs text-muted-foreground">
-              Southford Falls &middot; Kettletown
+              {parkId ? parkName(parkId) : "Southford Falls · Kettletown"}
             </span>
           </span>
         </Link>
+        {parkId ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={async () => {
+              await lock();
+              await router.navigate({ to: "/unlock" });
+            }}
+          >
+            <LogOut /> Sign out
+          </Button>
+        ) : null}
       </div>
     </header>
   );

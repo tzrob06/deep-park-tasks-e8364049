@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { CheckCircle2, Plus, RotateCcw, Search, Trash2 } from "lucide-react";
 import { CATEGORIES } from "@/data/tasks";
@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { getParkSession } from "@/lib/gate.functions";
+import { parkName } from "@/data/parks";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -26,11 +28,17 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
+  loader: async () => {
+    const { parkId } = await getParkSession();
+    if (!parkId) throw redirect({ to: "/unlock" });
+    return { parkId };
+  },
   component: TaskBoard,
 });
 
 function TaskBoard() {
-  const store = useTaskStore();
+  const { parkId } = Route.useLoaderData();
+  const store = useTaskStore(parkId);
   const [activeId, setActiveId] = useState(CATEGORIES[0]!.id);
   const [query, setQuery] = useState("");
   const [newTask, setNewTask] = useState("");
@@ -57,7 +65,7 @@ function TaskBoard() {
 
   return (
     <div className="min-h-screen topo-bg">
-      <SiteHeader />
+      <SiteHeader parkId={parkId} />
 
       <main className="mx-auto max-w-6xl px-4 py-8">
         <section className="rounded-xl border border-border bg-card p-6 shadow-panel">
@@ -70,7 +78,7 @@ function TaskBoard() {
                   month: "long",
                   day: "numeric",
                 })}{" "}
-                &middot; daily tasks clear automatically each morning
+                &middot; {parkName(parkId)} &middot; daily tasks clear automatically each morning
               </p>
             </div>
             <div className="w-full max-w-xs">

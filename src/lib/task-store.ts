@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { CATEGORIES } from "@/data/tasks";
 
-const STORAGE_KEY = "deep-maintenance-state-v1";
+const storageKey = (parkId: string) => `deep-maintenance-state-v1::${parkId}`;
 
 export type Completion = { at: string; by: string };
 export type StoreState = {
@@ -17,10 +17,10 @@ const EMPTY: StoreState = { completed: {}, custom: {}, removed: [], crew: "" };
 export const taskKey = (categoryId: string, task: string) => `${categoryId}::${task}`;
 export const todayKey = () => new Date().toISOString().slice(0, 10);
 
-function read(): StoreState {
+function read(parkId: string): StoreState {
   if (typeof window === "undefined") return EMPTY;
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(storageKey(parkId));
     if (!raw) return EMPTY;
     return { ...EMPTY, ...(JSON.parse(raw) as Partial<StoreState>) };
   } catch {
@@ -40,19 +40,20 @@ function pruneDaily(state: StoreState): StoreState {
   return { ...state, completed };
 }
 
-export function useTaskStore() {
+export function useTaskStore(parkId: string) {
   const [state, setState] = useState<StoreState>(EMPTY);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setState(pruneDaily(read()));
+    setHydrated(false);
+    setState(pruneDaily(read(parkId)));
     setHydrated(true);
-  }, []);
+  }, [parkId]);
 
   useEffect(() => {
     if (!hydrated) return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }, [state, hydrated]);
+    window.localStorage.setItem(storageKey(parkId), JSON.stringify(state));
+  }, [state, hydrated, parkId]);
 
   const toggle = useCallback((categoryId: string, task: string) => {
     setState((prev) => {
