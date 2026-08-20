@@ -224,6 +224,8 @@ function TaskBoard({
             {visible.map((task) => {
               const key = taskKey(activeId, task);
               const done = store.state.completed[key];
+              const priority = store.priorityOf(activeId, task);
+              const pStyle = PRIORITY_STYLES[priority];
               return (
                 <li key={key} className="group flex items-start gap-3 py-3">
                   <Checkbox
@@ -254,6 +256,17 @@ function TaskBoard({
                       </span>
                     ) : null}
                   </label>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      store.setPriority(activeId, task, NEXT_PRIORITY[priority])
+                    }
+                    className="flex items-center gap-1.5 rounded-full border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted"
+                    title={`Priority: ${pStyle.label} — click to change`}
+                  >
+                    <span className={cn("size-2 rounded-full", pStyle.dot)} />
+                    {pStyle.label}
+                  </button>
                   <Button
                     variant="ghost"
                     size="icon"
