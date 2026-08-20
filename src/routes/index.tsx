@@ -78,14 +78,23 @@ function TaskBoard({
   const [activeId, setActiveId] = useState(CATEGORIES[0]!.id);
   const [query, setQuery] = useState("");
   const [newTask, setNewTask] = useState("");
+  const [sortBy, setSortBy] = useState<"added" | "priority">("added");
 
   const active = CATEGORIES.find((category) => category.id === activeId)!;
   const tasks = store.tasksFor(activeId);
 
   const visible = useMemo(() => {
     const term = query.trim().toLowerCase();
-    return term ? tasks.filter((task) => task.toLowerCase().includes(term)) : tasks;
-  }, [tasks, query]);
+    const filtered = term ? tasks.filter((task) => task.toLowerCase().includes(term)) : tasks;
+    if (sortBy === "priority") {
+      return [...filtered].sort((a, b) => {
+        const pa = PRIORITY_ORDER[store.priorityOf(activeId, a)];
+        const pb = PRIORITY_ORDER[store.priorityOf(activeId, b)];
+        return pa - pb;
+      });
+    }
+    return filtered;
+  }, [tasks, query, sortBy, store, activeId]);
 
   const counts = CATEGORIES.map((category) => {
     const all = store.tasksFor(category.id);
