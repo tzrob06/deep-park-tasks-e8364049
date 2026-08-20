@@ -117,9 +117,6 @@ function TaskBoard({
               >
                 Crew member on shift
               </label>
-              <p className="sr-only">
-                Optional. The name entered here is stamped on each task you check off.
-              </p>
               <Input
                 id="crew"
                 value={store.state.crew}
@@ -127,6 +124,9 @@ function TaskBoard({
                 placeholder="Optional — stamps your name on completed tasks"
                 className="mt-1"
               />
+              <p className="mt-1 text-xs text-muted-foreground">
+                stamps your name on completed tasks
+              </p>
             </div>
           </div>
 
@@ -174,12 +174,7 @@ function TaskBoard({
 
         <section className="mt-6 rounded-xl border border-border bg-card p-6 shadow-panel">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-2xl font-semibold uppercase tracking-wide">{active.short}</h2>
-              <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                {active.name}
-              </p>
-            </div>
+            <h2 className="text-2xl font-semibold uppercase tracking-wide">{active.short}</h2>
             <div className="flex items-center gap-2">
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -285,7 +280,8 @@ function TaskBoard({
       </main>
 
       <footer className="border-t border-border/70 py-6 text-center text-xs text-muted-foreground">
-        Connecticut DEEP &middot; Western District Parks Maintenance
+        <p>Connecticut DEEP &middot; Western District Parks Maintenance</p>
+        <p className="mt-1">Designed and Developed by Thomas Roberts</p>
       </footer>
     </div>
   );
