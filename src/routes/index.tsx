@@ -1,16 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { CheckCircle2, Plus, RotateCcw, Search, Trash2 } from "lucide-react";
+import { ArrowDownUp, CheckCircle2, Plus, RotateCcw, Search, Trash2 } from "lucide-react";
 import { CATEGORIES } from "@/data/tasks";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ParkPicker } from "@/components/ParkPicker";
-import { useTaskStore, taskKey } from "@/lib/task-store";
+import { useTaskStore, taskKey, type Priority, PRIORITY_ORDER, DEFAULT_PRIORITY } from "@/lib/task-store";
 import { useParks } from "@/lib/park-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+
+const PRIORITY_STYLES: Record<Priority, { dot: string; label: string }> = {
+  high: { dot: "bg-red-500", label: "High" },
+  medium: { dot: "bg-amber-500", label: "Medium" },
+  low: { dot: "bg-emerald-500", label: "Low" },
+};
+
+const NEXT_PRIORITY: Record<Priority, Priority> = { low: "medium", medium: "high", high: "low" };
 
 export const Route = createFileRoute("/")({
   head: () => ({
