@@ -117,6 +117,20 @@ export function useTaskStore(parkId: string) {
 
   const setCrew = useCallback((crew: string) => setState((prev) => ({ ...prev, crew })), []);
 
+  const setPriority = useCallback((categoryId: string, task: string, priority: Priority) => {
+    setState((prev) => ({
+      ...prev,
+      priorities: { ...prev.priorities, [taskKey(categoryId, task)]: priority },
+    }));
+  }, []);
+
+  const priorityOf = useCallback(
+    (categoryId: string, task: string): Priority =>
+      state.priorities[taskKey(categoryId, task)] ?? DEFAULT_PRIORITY,
+    [state.priorities],
+  );
+
+
   const tasksFor = useCallback(
     (categoryId: string) => {
       // Every park starts with a blank checklist; crews build their own lists.
