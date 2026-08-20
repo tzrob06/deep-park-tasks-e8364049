@@ -248,7 +248,9 @@ function TaskBoard({
             })}
             {visible.length === 0 ? (
               <li className="py-8 text-center text-sm text-muted-foreground">
-                No tasks match &ldquo;{query}&rdquo;.
+                {query.trim()
+                  ? `No tasks match “${query}”.`
+                  : "No tasks yet — add one below."}
               </li>
             ) : null}
           </ul>
