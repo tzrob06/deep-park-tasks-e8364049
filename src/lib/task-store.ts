@@ -4,15 +4,20 @@ import { CATEGORIES } from "@/data/tasks";
 const storageKey = (parkId: string) => `deep-maintenance-state-v1::${parkId}`;
 
 export type Completion = { at: string; by: string };
+export type Priority = "low" | "medium" | "high";
+export const PRIORITY_ORDER: Record<Priority, number> = { high: 0, medium: 1, low: 2 };
+export const DEFAULT_PRIORITY: Priority = "medium";
 export type StoreState = {
   completed: Record<string, Completion>;
   custom: Record<string, string[]>;
   /** Keys of built-in tasks the crew has removed from the list. */
   removed: string[];
+  /** Priority per task key. */
+  priorities: Record<string, Priority>;
   crew: string;
 };
 
-const EMPTY: StoreState = { completed: {}, custom: {}, removed: [], crew: "" };
+const EMPTY: StoreState = { completed: {}, custom: {}, removed: [], priorities: {}, crew: "" };
 
 export const taskKey = (categoryId: string, task: string) => `${categoryId}::${task}`;
 export const todayKey = () => new Date().toISOString().slice(0, 10);
@@ -111,6 +116,20 @@ export function useTaskStore(parkId: string) {
   }, []);
 
   const setCrew = useCallback((crew: string) => setState((prev) => ({ ...prev, crew })), []);
+
+  const setPriority = useCallback((categoryId: string, task: string, priority: Priority) => {
+    setState((prev) => ({
+      ...prev,
+      priorities: { ...prev.priorities, [taskKey(categoryId, task)]: priority },
+    }));
+  }, []);
+
+  const priorityOf = useCallback(
+    (categoryId: string, task: string): Priority =>
+      state.priorities[taskKey(categoryId, task)] ?? DEFAULT_PRIORITY,
+    [state.priorities],
+  );
+
 
   const tasksFor = useCallback(
     (categoryId: string) => {
