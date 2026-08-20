@@ -114,8 +114,8 @@ export function useTaskStore(parkId: string) {
 
   const tasksFor = useCallback(
     (categoryId: string) => {
-      // Southford Falls ships with the full built-in checklist; every other park starts blank.
-      const builtIn = parkId === "southford" ? CATEGORIES.find((c) => c.id === categoryId)?.tasks ?? [] : [];
+      // Every park starts with a blank checklist; crews build their own lists.
+      const builtIn: string[] = [];
       const base = builtIn.filter((task) => !state.removed.includes(taskKey(categoryId, task)));
       return [...base, ...(state.custom[categoryId] ?? [])];
     },
