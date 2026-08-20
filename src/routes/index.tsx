@@ -203,6 +203,14 @@ function TaskBoard({
                 />
               </div>
               <Button
+                variant={sortBy === "priority" ? "default" : "outline"}
+                onClick={() => setSortBy(sortBy === "priority" ? "added" : "priority")}
+                title="Sort by priority"
+              >
+                <ArrowDownUp />
+                {sortBy === "priority" ? "Priority" : "Order"}
+              </Button>
+              <Button
                 variant="outline"
                 onClick={() => store.resetCategory(activeId)}
                 disabled={activeCount.done === 0}
