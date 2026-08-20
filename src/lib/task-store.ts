@@ -156,6 +156,8 @@ export function useTaskStore(parkId: string) {
     removeTask,
     restoreRemoved,
     setCrew,
+    setPriority,
+    priorityOf,
     tasksFor,
     isCustom,
   };

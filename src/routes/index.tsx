@@ -1,16 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { CheckCircle2, Plus, RotateCcw, Search, Trash2 } from "lucide-react";
+import { ArrowDownUp, CheckCircle2, Plus, RotateCcw, Search, Trash2 } from "lucide-react";
 import { CATEGORIES } from "@/data/tasks";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ParkPicker } from "@/components/ParkPicker";
-import { useTaskStore, taskKey } from "@/lib/task-store";
+import { useTaskStore, taskKey, type Priority, PRIORITY_ORDER, DEFAULT_PRIORITY } from "@/lib/task-store";
 import { useParks } from "@/lib/park-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+
+const PRIORITY_STYLES: Record<Priority, { dot: string; label: string }> = {
+  high: { dot: "bg-red-500", label: "High" },
+  medium: { dot: "bg-amber-500", label: "Medium" },
+  low: { dot: "bg-emerald-500", label: "Low" },
+};
+
+const NEXT_PRIORITY: Record<Priority, Priority> = { low: "medium", medium: "high", high: "low" };
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -70,14 +78,23 @@ function TaskBoard({
   const [activeId, setActiveId] = useState(CATEGORIES[0]!.id);
   const [query, setQuery] = useState("");
   const [newTask, setNewTask] = useState("");
+  const [sortBy, setSortBy] = useState<"added" | "priority">("added");
 
   const active = CATEGORIES.find((category) => category.id === activeId)!;
   const tasks = store.tasksFor(activeId);
 
   const visible = useMemo(() => {
     const term = query.trim().toLowerCase();
-    return term ? tasks.filter((task) => task.toLowerCase().includes(term)) : tasks;
-  }, [tasks, query]);
+    const filtered = term ? tasks.filter((task) => task.toLowerCase().includes(term)) : tasks;
+    if (sortBy === "priority") {
+      return [...filtered].sort((a, b) => {
+        const pa = PRIORITY_ORDER[store.priorityOf(activeId, a)];
+        const pb = PRIORITY_ORDER[store.priorityOf(activeId, b)];
+        return pa - pb;
+      });
+    }
+    return filtered;
+  }, [tasks, query, sortBy, store, activeId]);
 
   const counts = CATEGORIES.map((category) => {
     const all = store.tasksFor(category.id);
@@ -186,6 +203,14 @@ function TaskBoard({
                 />
               </div>
               <Button
+                variant={sortBy === "priority" ? "default" : "outline"}
+                onClick={() => setSortBy(sortBy === "priority" ? "added" : "priority")}
+                title="Sort by priority"
+              >
+                <ArrowDownUp />
+                {sortBy === "priority" ? "Priority" : "Order"}
+              </Button>
+              <Button
                 variant="outline"
                 onClick={() => store.resetCategory(activeId)}
                 disabled={activeCount.done === 0}
@@ -199,6 +224,8 @@ function TaskBoard({
             {visible.map((task) => {
               const key = taskKey(activeId, task);
               const done = store.state.completed[key];
+              const priority = store.priorityOf(activeId, task);
+              const pStyle = PRIORITY_STYLES[priority];
               return (
                 <li key={key} className="group flex items-start gap-3 py-3">
                   <Checkbox
@@ -229,6 +256,17 @@ function TaskBoard({
                       </span>
                     ) : null}
                   </label>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      store.setPriority(activeId, task, NEXT_PRIORITY[priority])
+                    }
+                    className="flex items-center gap-1.5 rounded-full border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted"
+                    title={`Priority: ${pStyle.label} — click to change`}
+                  >
+                    <span className={cn("size-2 rounded-full", pStyle.dot)} />
+                    {pStyle.label}
+                  </button>
                   <Button
                     variant="ghost"
                     size="icon"
