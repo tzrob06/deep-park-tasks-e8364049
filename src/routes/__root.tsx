@@ -11,7 +11,6 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { themeInitScript } from "../lib/theme-store";
 
 function NotFoundComponent() {
   return (
@@ -116,7 +115,6 @@ function RootShell({ children }: { children: ReactNode }) {
       <body>
         {children}
         <Scripts />
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </body>
     </html>
   );
