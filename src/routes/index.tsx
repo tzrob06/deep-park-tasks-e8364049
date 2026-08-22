@@ -78,7 +78,7 @@ function TaskBoard({
   const [activeId, setActiveId] = useState(CATEGORIES[0]!.id);
   const [query, setQuery] = useState("");
   const [newTask, setNewTask] = useState("");
-  const [sortBy, setSortBy] = useState<"added" | "priority">("added");
+  
 
   const active = CATEGORIES.find((category) => category.id === activeId)!;
   const tasks = store.tasksFor(activeId);
