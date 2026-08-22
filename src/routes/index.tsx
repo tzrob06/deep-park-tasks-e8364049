@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowDownUp, CheckCircle2, Plus, RotateCcw, Search, Trash2 } from "lucide-react";
+import { CheckCircle2, Plus, RotateCcw, Search, Trash2 } from "lucide-react";
 import { CATEGORIES } from "@/data/tasks";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ParkPicker } from "@/components/ParkPicker";
@@ -78,7 +78,7 @@ function TaskBoard({
   const [activeId, setActiveId] = useState(CATEGORIES[0]!.id);
   const [query, setQuery] = useState("");
   const [newTask, setNewTask] = useState("");
-  const [sortBy, setSortBy] = useState<"added" | "priority">("added");
+  
 
   const active = CATEGORIES.find((category) => category.id === activeId)!;
   const tasks = store.tasksFor(activeId);
@@ -86,15 +86,12 @@ function TaskBoard({
   const visible = useMemo(() => {
     const term = query.trim().toLowerCase();
     const filtered = term ? tasks.filter((task) => task.toLowerCase().includes(term)) : tasks;
-    if (sortBy === "priority") {
-      return [...filtered].sort((a, b) => {
-        const pa = PRIORITY_ORDER[store.priorityOf(activeId, a)];
-        const pb = PRIORITY_ORDER[store.priorityOf(activeId, b)];
-        return pa - pb;
-      });
-    }
-    return filtered;
-  }, [tasks, query, sortBy, store, activeId]);
+    return [...filtered].sort((a, b) => {
+      const pa = PRIORITY_ORDER[store.priorityOf(activeId, a)];
+      const pb = PRIORITY_ORDER[store.priorityOf(activeId, b)];
+      return pa - pb;
+    });
+  }, [tasks, query, store, activeId]);
 
   const counts = CATEGORIES.map((category) => {
     const all = store.tasksFor(category.id);
@@ -202,14 +199,6 @@ function TaskBoard({
                   className="w-56 pl-9"
                 />
               </div>
-              <Button
-                variant={sortBy === "priority" ? "default" : "outline"}
-                onClick={() => setSortBy(sortBy === "priority" ? "added" : "priority")}
-                title="Sort by priority"
-              >
-                <ArrowDownUp />
-                {sortBy === "priority" ? "Priority" : "Order"}
-              </Button>
               <Button
                 variant="outline"
                 onClick={() => store.resetCategory(activeId)}
