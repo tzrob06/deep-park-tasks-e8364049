@@ -86,15 +86,12 @@ function TaskBoard({
   const visible = useMemo(() => {
     const term = query.trim().toLowerCase();
     const filtered = term ? tasks.filter((task) => task.toLowerCase().includes(term)) : tasks;
-    if (sortBy === "priority") {
-      return [...filtered].sort((a, b) => {
-        const pa = PRIORITY_ORDER[store.priorityOf(activeId, a)];
-        const pb = PRIORITY_ORDER[store.priorityOf(activeId, b)];
-        return pa - pb;
-      });
-    }
-    return filtered;
-  }, [tasks, query, sortBy, store, activeId]);
+    return [...filtered].sort((a, b) => {
+      const pa = PRIORITY_ORDER[store.priorityOf(activeId, a)];
+      const pb = PRIORITY_ORDER[store.priorityOf(activeId, b)];
+      return pa - pb;
+    });
+  }, [tasks, query, store, activeId]);
 
   const counts = CATEGORIES.map((category) => {
     const all = store.tasksFor(category.id);
@@ -202,14 +199,6 @@ function TaskBoard({
                   className="w-56 pl-9"
                 />
               </div>
-              <Button
-                variant={sortBy === "priority" ? "default" : "outline"}
-                onClick={() => setSortBy(sortBy === "priority" ? "added" : "priority")}
-                title="Sort by priority"
-              >
-                <ArrowDownUp />
-                {sortBy === "priority" ? "Priority" : "Order"}
-              </Button>
               <Button
                 variant="outline"
                 onClick={() => store.resetCategory(activeId)}
