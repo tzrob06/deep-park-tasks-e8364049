@@ -79,6 +79,7 @@ function TaskBoard({
   const [activeId, setActiveId] = useState(CATEGORIES[0]!.id);
   const [query, setQuery] = useState("");
   const [newTask, setNewTask] = useState("");
+  const [newPriority, setNewPriority] = useState<Priority>(DEFAULT_PRIORITY);
   
 
   const active = CATEGORIES.find((category) => category.id === activeId)!;
