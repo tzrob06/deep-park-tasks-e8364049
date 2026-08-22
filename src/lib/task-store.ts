@@ -79,13 +79,19 @@ export function useTaskStore(parkId: string) {
     });
   }, []);
 
-  const addTask = useCallback((categoryId: string, task: string) => {
+  const addTask = useCallback((categoryId: string, task: string, priority?: Priority) => {
     const value = task.trim();
     if (!value) return;
-    setState((prev) => ({
-      ...prev,
-      custom: { ...prev.custom, [categoryId]: [...(prev.custom[categoryId] ?? []), value] },
-    }));
+    setState((prev) => {
+      const key = taskKey(categoryId, value);
+      return {
+        ...prev,
+        custom: { ...prev.custom, [categoryId]: [...(prev.custom[categoryId] ?? []), value] },
+        priorities: priority
+          ? { ...prev.priorities, [key]: priority }
+          : prev.priorities,
+      };
+    });
   }, []);
 
   const removeTask = useCallback((categoryId: string, task: string) => {

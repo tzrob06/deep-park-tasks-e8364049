@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 const PRIORITY_STYLES: Record<Priority, { dot: string; label: string }> = {
@@ -78,6 +79,7 @@ function TaskBoard({
   const [activeId, setActiveId] = useState(CATEGORIES[0]!.id);
   const [query, setQuery] = useState("");
   const [newTask, setNewTask] = useState("");
+  const [newPriority, setNewPriority] = useState<Priority>(DEFAULT_PRIORITY);
   
 
   const active = CATEGORIES.find((category) => category.id === activeId)!;
@@ -287,18 +289,45 @@ function TaskBoard({
           ) : null}
 
           <form
-            className="mt-5 flex gap-2 border-t border-border pt-5"
+            className="mt-5 flex flex-wrap gap-2 border-t border-border pt-5"
             onSubmit={(event) => {
               event.preventDefault();
-              store.addTask(activeId, newTask);
+              store.addTask(activeId, newTask, newPriority);
               setNewTask("");
+              setNewPriority(DEFAULT_PRIORITY);
             }}
           >
             <Input
               value={newTask}
               onChange={(event) => setNewTask(event.target.value)}
               placeholder={`Add a task to ${active.short.toLowerCase()} work`}
+              className="min-w-40 flex-1"
             />
+            <Select value={newPriority} onValueChange={(value) => setNewPriority(value as Priority)}>
+              <SelectTrigger className="w-36">
+                <SelectValue placeholder="Priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="high">
+                  <span className="flex items-center gap-2">
+                    <span className="size-2 rounded-full bg-red-500" />
+                    High
+                  </span>
+                </SelectItem>
+                <SelectItem value="medium">
+                  <span className="flex items-center gap-2">
+                    <span className="size-2 rounded-full bg-amber-500" />
+                    Medium
+                  </span>
+                </SelectItem>
+                <SelectItem value="low">
+                  <span className="flex items-center gap-2">
+                    <span className="size-2 rounded-full bg-emerald-500" />
+                    Low
+                  </span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
             <Button type="submit" disabled={!newTask.trim()}>
               <Plus /> Add
             </Button>
