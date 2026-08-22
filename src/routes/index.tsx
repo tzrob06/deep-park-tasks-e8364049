@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowDownUp, CheckCircle2, Plus, RotateCcw, Search, Trash2 } from "lucide-react";
+import { CheckCircle2, Plus, RotateCcw, Search, Trash2 } from "lucide-react";
 import { CATEGORIES } from "@/data/tasks";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ParkPicker } from "@/components/ParkPicker";
