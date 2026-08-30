@@ -12,4 +12,6 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Allow the Base44 preview's external hostname (Vite blocks unknown Host headers by default).
+  vite: { server: { allowedHosts: true } },
 });
