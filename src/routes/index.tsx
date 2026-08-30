@@ -120,7 +120,8 @@ function TaskBoard({
             <div>
               <h1 className="text-3xl font-semibold uppercase tracking-wide">Task Board</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                {parkLabel} &middot; every task shows on the day you schedule it
+                {parkLabel} &middot; every task shows on the day you schedule it &middot; pick its
+                priority when you add it
               </p>
             </div>
             <div className="w-full max-w-xs">
@@ -302,32 +303,13 @@ function TaskBoard({
                         </span>
                       ) : null}
                     </label>
-                    <Select
-                      value={priority}
-                      onValueChange={(value) => store.setPriority(task, value as Priority)}
+                    <span
+                      className="flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-border px-3 text-xs text-muted-foreground"
+                      title={`Priority locked in when this task was added: ${pStyle.label}`}
                     >
-                      <SelectTrigger
-                        aria-label={`Priority for ${task}`}
-                        className="h-9 w-[7.5rem] shrink-0 rounded-full text-xs"
-                      >
-                        <span className="flex items-center gap-1.5">
-                          <span className={cn("size-2 rounded-full", pStyle.dot)} />
-                          <SelectValue placeholder="Priority" />
-                        </span>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {PRIORITY_OPTIONS.map((option) => (
-                          <SelectItem key={option} value={option}>
-                            <span className="flex items-center gap-2">
-                              <span
-                                className={cn("size-2 rounded-full", PRIORITY_STYLES[option].dot)}
-                              />
-                              {PRIORITY_STYLES[option].label}
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      <span className={cn("size-2 rounded-full", pStyle.dot)} />
+                      {pStyle.label}
+                    </span>
                     <Button
                       variant="ghost"
                       size="icon"
