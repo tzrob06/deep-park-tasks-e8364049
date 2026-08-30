@@ -1,48 +1,55 @@
 import { useCallback, useEffect, useState } from "react";
 import { CATEGORIES } from "@/data/tasks";
 
-const storageKey = (parkId: string) => `deep-maintenance-state-v1::${parkId}`;
+const storageKey = (parkId: string) => `deep-maintenance-state-v2::${parkId}`;
 
 export type Completion = { at: string; by: string };
 export type Priority = "low" | "medium" | "high";
 export const PRIORITY_ORDER: Record<Priority, number> = { high: 0, medium: 1, low: 2 };
 export const DEFAULT_PRIORITY: Priority = "medium";
+
 export type StoreState = {
+  /** Master task list, grouped by category. Fully editable on the Task Library page. */
+  library: Record<string, string[]>;
+  /** Extra tasks pinned to a specific calendar day (YYYY-MM-DD). */
+  schedule: Record<string, string[]>;
+  /** Completions keyed by `${date}::${task}`. */
   completed: Record<string, Completion>;
-  custom: Record<string, string[]>;
-  /** Keys of built-in tasks the crew has removed from the list. */
-  removed: string[];
-  /** Priority per task key. */
+  /** Priority per task label. */
   priorities: Record<string, Priority>;
   crew: string;
 };
 
-const EMPTY: StoreState = { completed: {}, custom: {}, removed: [], priorities: {}, crew: "" };
+export const defaultLibrary = (): Record<string, string[]> =>
+  Object.fromEntries(CATEGORIES.map((category) => [category.id, [...category.tasks]]));
 
-export const taskKey = (categoryId: string, task: string) => `${categoryId}::${task}`;
-export const todayKey = () => new Date().toISOString().slice(0, 10);
+const EMPTY: StoreState = {
+  library: {},
+  schedule: {},
+  completed: {},
+  priorities: {},
+  crew: "",
+};
+
+export const dateKey = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+export const todayKey = () => dateKey(new Date());
+export const completionKey = (date: string, task: string) => `${date}::${task}`;
 
 function read(parkId: string): StoreState {
-  if (typeof window === "undefined") return EMPTY;
+  if (typeof window === "undefined") return { ...EMPTY, library: defaultLibrary() };
   try {
     const raw = window.localStorage.getItem(storageKey(parkId));
-    if (!raw) return EMPTY;
-    return { ...EMPTY, ...(JSON.parse(raw) as Partial<StoreState>) };
+    if (!raw) return { ...EMPTY, library: defaultLibrary() };
+    const parsed = JSON.parse(raw) as Partial<StoreState>;
+    return {
+      ...EMPTY,
+      ...parsed,
+      library: parsed.library ?? defaultLibrary(),
+    };
   } catch {
-    return EMPTY;
+    return { ...EMPTY, library: defaultLibrary() };
   }
-}
-
-/** Daily tasks clear themselves automatically at the start of a new day. */
-function pruneDaily(state: StoreState): StoreState {
-  const today = todayKey();
-  const completed: Record<string, Completion> = {};
-  for (const [key, value] of Object.entries(state.completed)) {
-    const isDaily = key.startsWith("daily::");
-    if (isDaily && value.at.slice(0, 10) !== today) continue;
-    completed[key] = value;
-  }
-  return { ...state, completed };
 }
 
 export function useTaskStore(parkId: string) {
@@ -51,7 +58,7 @@ export function useTaskStore(parkId: string) {
 
   useEffect(() => {
     setHydrated(false);
-    setState(pruneDaily(read(parkId)));
+    setState(read(parkId));
     setHydrated(true);
   }, [parkId]);
 
@@ -60,9 +67,9 @@ export function useTaskStore(parkId: string) {
     window.localStorage.setItem(storageKey(parkId), JSON.stringify(state));
   }, [state, hydrated, parkId]);
 
-  const toggle = useCallback((categoryId: string, task: string) => {
+  const toggle = useCallback((date: string, task: string) => {
     setState((prev) => {
-      const key = taskKey(categoryId, task);
+      const key = completionKey(date, task);
       const completed = { ...prev.completed };
       if (completed[key]) delete completed[key];
       else completed[key] = { at: new Date().toISOString(), by: prev.crew.trim() };
@@ -70,101 +77,161 @@ export function useTaskStore(parkId: string) {
     });
   }, []);
 
-  const resetCategory = useCallback((categoryId: string) => {
-    setState((prev) => {
-      const completed = Object.fromEntries(
-        Object.entries(prev.completed).filter(([key]) => !key.startsWith(`${categoryId}::`)),
-      );
-      return { ...prev, completed };
-    });
+  const clearDay = useCallback((date: string) => {
+    setState((prev) => ({
+      ...prev,
+      completed: Object.fromEntries(
+        Object.entries(prev.completed).filter(([key]) => !key.startsWith(`${date}::`)),
+      ),
+    }));
   }, []);
 
-  const addTask = useCallback((categoryId: string, task: string, priority?: Priority) => {
+  /** Pin a task to a specific day. */
+  const scheduleTask = useCallback((date: string, task: string, priority?: Priority) => {
     const value = task.trim();
     if (!value) return;
     setState((prev) => {
-      const key = taskKey(categoryId, value);
+      const existing = prev.schedule[date] ?? [];
+      if (existing.includes(value)) return prev;
       return {
         ...prev,
-        custom: { ...prev.custom, [categoryId]: [...(prev.custom[categoryId] ?? []), value] },
-        priorities: priority
-          ? { ...prev.priorities, [key]: priority }
-          : prev.priorities,
+        schedule: { ...prev.schedule, [date]: [...existing, value] },
+        priorities: priority ? { ...prev.priorities, [value]: priority } : prev.priorities,
       };
     });
   }, []);
 
-  const removeTask = useCallback((categoryId: string, task: string) => {
+  const unscheduleTask = useCallback((date: string, task: string) => {
     setState((prev) => {
-      const key = taskKey(categoryId, task);
       const completed = { ...prev.completed };
-      delete completed[key];
-      const isCustom = (prev.custom[categoryId] ?? []).includes(task);
+      delete completed[completionKey(date, task)];
       return {
         ...prev,
         completed,
-        custom: isCustom
-          ? {
-              ...prev.custom,
-              [categoryId]: (prev.custom[categoryId] ?? []).filter((item) => item !== task),
-            }
-          : prev.custom,
-        removed: isCustom || prev.removed.includes(key) ? prev.removed : [...prev.removed, key],
+        schedule: {
+          ...prev.schedule,
+          [date]: (prev.schedule[date] ?? []).filter((item) => item !== task),
+        },
       };
     });
   }, []);
 
-  const restoreRemoved = useCallback((categoryId: string) => {
-    setState((prev) => ({
-      ...prev,
-      removed: prev.removed.filter((key) => !key.startsWith(`${categoryId}::`)),
-    }));
-  }, []);
-
-  const setCrew = useCallback((crew: string) => setState((prev) => ({ ...prev, crew })), []);
-
-  const setPriority = useCallback((categoryId: string, task: string, priority: Priority) => {
-    setState((prev) => ({
-      ...prev,
-      priorities: { ...prev.priorities, [taskKey(categoryId, task)]: priority },
-    }));
+  const setPriority = useCallback((task: string, priority: Priority) => {
+    setState((prev) => ({ ...prev, priorities: { ...prev.priorities, [task]: priority } }));
   }, []);
 
   const priorityOf = useCallback(
-    (categoryId: string, task: string): Priority =>
-      state.priorities[taskKey(categoryId, task)] ?? DEFAULT_PRIORITY,
+    (task: string): Priority => state.priorities[task] ?? DEFAULT_PRIORITY,
     [state.priorities],
   );
 
+  const setCrew = useCallback((crew: string) => setState((prev) => ({ ...prev, crew })), []);
 
-  const tasksFor = useCallback(
-    (categoryId: string) => {
-      // Every park starts with a blank checklist; crews build their own lists.
-      const builtIn: string[] = [];
-      const base = builtIn.filter((task) => !state.removed.includes(taskKey(categoryId, task)));
-      return [...base, ...(state.custom[categoryId] ?? [])];
-    },
-    [state.custom, state.removed, parkId],
+  // --- Library editing -----------------------------------------------------
+
+  const libraryFor = useCallback(
+    (categoryId: string) => state.library[categoryId] ?? [],
+    [state.library],
   );
 
+  const addLibraryTask = useCallback((categoryId: string, task: string, priority?: Priority) => {
+    const value = task.trim();
+    if (!value) return;
+    setState((prev) => {
+      const existing = prev.library[categoryId] ?? [];
+      if (existing.includes(value)) return prev;
+      return {
+        ...prev,
+        library: { ...prev.library, [categoryId]: [...existing, value] },
+        priorities: priority ? { ...prev.priorities, [value]: priority } : prev.priorities,
+      };
+    });
+  }, []);
 
-  const isCustom = useCallback(
-    (categoryId: string, task: string) => (state.custom[categoryId] ?? []).includes(task),
-    [state.custom],
+  const removeLibraryTask = useCallback((categoryId: string, task: string) => {
+    setState((prev) => ({
+      ...prev,
+      library: {
+        ...prev.library,
+        [categoryId]: (prev.library[categoryId] ?? []).filter((item) => item !== task),
+      },
+    }));
+  }, []);
+
+  const renameLibraryTask = useCallback((categoryId: string, task: string, next: string) => {
+    const value = next.trim();
+    if (!value || value === task) return;
+    setState((prev) => ({
+      ...prev,
+      library: {
+        ...prev.library,
+        [categoryId]: (prev.library[categoryId] ?? []).map((item) =>
+          item === task ? value : item,
+        ),
+      },
+      priorities: prev.priorities[task]
+        ? { ...prev.priorities, [value]: prev.priorities[task]! }
+        : prev.priorities,
+    }));
+  }, []);
+
+  const resetLibrary = useCallback(() => {
+    setState((prev) => ({ ...prev, library: defaultLibrary() }));
+  }, []);
+
+  // --- Day view ------------------------------------------------------------
+
+  /** Daily tasks repeat every day; everything else shows on the day it is scheduled. */
+  const tasksForDay = useCallback(
+    (date: string) => {
+      const daily = state.library["daily"] ?? [];
+      const pinned = state.schedule[date] ?? [];
+      const seen = new Set<string>();
+      const all = [...daily, ...pinned].filter((task) => {
+        if (seen.has(task)) return false;
+        seen.add(task);
+        return true;
+      });
+      return all.sort(
+        (a, b) =>
+          PRIORITY_ORDER[state.priorities[a] ?? DEFAULT_PRIORITY] -
+          PRIORITY_ORDER[state.priorities[b] ?? DEFAULT_PRIORITY],
+      );
+    },
+    [state.library, state.schedule, state.priorities],
+  );
+
+  const isDaily = useCallback(
+    (task: string) => (state.library["daily"] ?? []).includes(task),
+    [state.library],
+  );
+
+  const dayStats = useCallback(
+    (date: string) => {
+      const all = tasksForDay(date);
+      const done = all.filter((task) => state.completed[completionKey(date, task)]).length;
+      return { total: all.length, done };
+    },
+    [tasksForDay, state.completed],
   );
 
   return {
     state,
     hydrated,
     toggle,
-    resetCategory,
-    addTask,
-    removeTask,
-    restoreRemoved,
-    setCrew,
+    clearDay,
+    scheduleTask,
+    unscheduleTask,
     setPriority,
     priorityOf,
-    tasksFor,
-    isCustom,
+    setCrew,
+    libraryFor,
+    addLibraryTask,
+    removeLibraryTask,
+    renameLibraryTask,
+    resetLibrary,
+    tasksForDay,
+    isDaily,
+    dayStats,
   };
 }
