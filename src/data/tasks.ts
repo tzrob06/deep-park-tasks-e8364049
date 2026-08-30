@@ -2,20 +2,6 @@ export type Category = { id: string; name: string; short: string; tasks: string[
 
 export const CATEGORIES: Category[] = [
   {
-    "id": "daily",
-    "name": "Daily Tasks",
-    "short": "Daily",
-    "tasks": [
-      "Southford Rounds",
-      "Kettletown Rounds",
-      "Close Bathrooms by 3pm",
-      "Truck Inspection Sheet",
-      "Truck Time Sheet",
-      "Sweep Shop(if time left at end of day)",
-      "check for graffiti by covered bridge"
-    ]
-  },
-  {
     "id": "weekly",
     "name": "Weekly Tasks",
     "short": "Weekly",
