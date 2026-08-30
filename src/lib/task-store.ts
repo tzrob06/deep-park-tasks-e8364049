@@ -42,10 +42,13 @@ function read(parkId: string): StoreState {
     const raw = window.localStorage.getItem(storageKey(parkId));
     if (!raw) return { ...EMPTY, library: defaultLibrary() };
     const parsed = JSON.parse(raw) as Partial<StoreState>;
+    const library = { ...(parsed.library ?? defaultLibrary()) };
+    // Legacy state may still hold the removed "Daily Tasks" category — drop it.
+    delete library["daily"];
     return {
       ...EMPTY,
       ...parsed,
-      library: parsed.library ?? defaultLibrary(),
+      library,
     };
   } catch {
     return { ...EMPTY, library: defaultLibrary() };
@@ -181,13 +184,12 @@ export function useTaskStore(parkId: string) {
 
   // --- Day view ------------------------------------------------------------
 
-  /** Daily tasks repeat every day; everything else shows on the day it is scheduled. */
+  /** Tasks show on the day they are scheduled. */
   const tasksForDay = useCallback(
     (date: string) => {
-      const daily = state.library["daily"] ?? [];
       const pinned = state.schedule[date] ?? [];
       const seen = new Set<string>();
-      const all = [...daily, ...pinned].filter((task) => {
+      const all = pinned.filter((task) => {
         if (seen.has(task)) return false;
         seen.add(task);
         return true;
@@ -198,12 +200,7 @@ export function useTaskStore(parkId: string) {
           PRIORITY_ORDER[state.priorities[b] ?? DEFAULT_PRIORITY],
       );
     },
-    [state.library, state.schedule, state.priorities],
-  );
-
-  const isDaily = useCallback(
-    (task: string) => (state.library["daily"] ?? []).includes(task),
-    [state.library],
+    [state.schedule, state.priorities],
   );
 
   const dayStats = useCallback(
@@ -231,7 +228,6 @@ export function useTaskStore(parkId: string) {
     renameLibraryTask,
     resetLibrary,
     tasksForDay,
-    isDaily,
     dayStats,
   };
 }
