@@ -25,7 +25,7 @@ const PRIORITY_STYLES: Record<Priority, { dot: string; label: string }> = {
   low: { dot: "bg-emerald-500", label: "Low" },
 };
 
-const NEXT_PRIORITY: Record<Priority, Priority> = { low: "medium", medium: "high", high: "low" };
+const PRIORITY_OPTIONS: Priority[] = ["high", "medium", "low"];
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export const Route = createFileRoute("/")({
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Daily park maintenance calendar for CT DEEP crews — see today's work, plan ahead, park by park.",
+          "Park maintenance calendar for CT DEEP crews — see today's work, plan ahead, park by park.",
       },
       { property: "og:title", content: "DEEP Park Maintenance Task Board" },
       {
@@ -120,8 +120,7 @@ function TaskBoard({
             <div>
               <h1 className="text-3xl font-semibold uppercase tracking-wide">Task Board</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                {parkLabel} &middot; daily tasks repeat every day, everything else shows on the day
-                you schedule it
+                {parkLabel} &middot; every task shows on the day you schedule it
               </p>
             </div>
             <div className="w-full max-w-xs">
@@ -233,7 +232,9 @@ function TaskBoard({
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="font-display text-3xl font-semibold uppercase tracking-wide">
-                  {selectedDate === today ? "Today" : selected.toLocaleDateString(undefined, { weekday: "long" })}
+                  {selectedDate === today
+                    ? "Today"
+                    : selected.toLocaleDateString(undefined, { weekday: "long" })}
                 </h2>
                 <p className="text-sm text-muted-foreground">
                   {selected.toLocaleDateString(undefined, {
@@ -271,16 +272,15 @@ function TaskBoard({
                 const done = store.state.completed[key];
                 const priority = store.priorityOf(task);
                 const pStyle = PRIORITY_STYLES[priority];
-                const daily = store.isDaily(task);
                 return (
-                  <li key={key} className="group flex items-start gap-3 py-4">
+                  <li key={key} className="group flex flex-wrap items-start gap-3 py-4">
                     <Checkbox
                       id={key}
                       checked={Boolean(done)}
                       onCheckedChange={() => store.toggle(selectedDate, task)}
                       className="mt-1 size-5"
                     />
-                    <label htmlFor={key} className="flex-1 cursor-pointer">
+                    <label htmlFor={key} className="min-w-40 flex-1 cursor-pointer">
                       <span
                         className={cn(
                           "text-base capitalize",
@@ -289,11 +289,6 @@ function TaskBoard({
                       >
                         {task}
                       </span>
-                      {daily ? (
-                        <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                          Daily
-                        </span>
-                      ) : null}
                       {done ? (
                         <span className="mt-0.5 flex items-center gap-1 text-xs text-primary">
                           <CheckCircle2 className="size-3" />
@@ -307,26 +302,41 @@ function TaskBoard({
                         </span>
                       ) : null}
                     </label>
-                    <button
-                      type="button"
-                      onClick={() => store.setPriority(task, NEXT_PRIORITY[priority])}
-                      className="flex items-center gap-1.5 rounded-full border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted"
-                      title={`Priority: ${pStyle.label} — click to change`}
+                    <Select
+                      value={priority}
+                      onValueChange={(value) => store.setPriority(task, value as Priority)}
                     >
-                      <span className={cn("size-2 rounded-full", pStyle.dot)} />
-                      {pStyle.label}
-                    </button>
-                    {!daily ? (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Remove ${task}`}
-                        className="text-muted-foreground hover:text-destructive"
-                        onClick={() => store.unscheduleTask(selectedDate, task)}
+                      <SelectTrigger
+                        aria-label={`Priority for ${task}`}
+                        className="h-9 w-[7.5rem] shrink-0 rounded-full text-xs"
                       >
-                        <Trash2 />
-                      </Button>
-                    ) : null}
+                        <span className="flex items-center gap-1.5">
+                          <span className={cn("size-2 rounded-full", pStyle.dot)} />
+                          <SelectValue placeholder="Priority" />
+                        </span>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PRIORITY_OPTIONS.map((option) => (
+                          <SelectItem key={option} value={option}>
+                            <span className="flex items-center gap-2">
+                              <span
+                                className={cn("size-2 rounded-full", PRIORITY_STYLES[option].dot)}
+                              />
+                              {PRIORITY_STYLES[option].label}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Remove ${task}`}
+                      className="shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => store.unscheduleTask(selectedDate, task)}
+                    >
+                      <Trash2 />
+                    </Button>
                   </li>
                 );
               })}
@@ -360,29 +370,22 @@ function TaskBoard({
                     <option key={task} value={task} />
                   ))}
               </datalist>
-              <Select value={newPriority} onValueChange={(value) => setNewPriority(value as Priority)}>
+              <Select
+                value={newPriority}
+                onValueChange={(value) => setNewPriority(value as Priority)}
+              >
                 <SelectTrigger className="w-36">
                   <SelectValue placeholder="Priority" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="high">
-                    <span className="flex items-center gap-2">
-                      <span className="size-2 rounded-full bg-red-500" />
-                      High
-                    </span>
-                  </SelectItem>
-                  <SelectItem value="medium">
-                    <span className="flex items-center gap-2">
-                      <span className="size-2 rounded-full bg-amber-500" />
-                      Medium
-                    </span>
-                  </SelectItem>
-                  <SelectItem value="low">
-                    <span className="flex items-center gap-2">
-                      <span className="size-2 rounded-full bg-emerald-500" />
-                      Low
-                    </span>
-                  </SelectItem>
+                  {PRIORITY_OPTIONS.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      <span className="flex items-center gap-2">
+                        <span className={cn("size-2 rounded-full", PRIORITY_STYLES[option].dot)} />
+                        {PRIORITY_STYLES[option].label}
+                      </span>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <Button type="submit" disabled={!newTask.trim()}>
