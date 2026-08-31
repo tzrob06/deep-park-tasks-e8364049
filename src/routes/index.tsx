@@ -114,126 +114,135 @@ function TaskBoard({
     <div className="min-h-screen topo-bg">
       <SiteHeader parkLabel={parkLabel} onSwitchPark={onSwitchPark} />
 
-      <main className="mx-auto max-w-6xl px-4 py-8">
-        <section className="rounded-xl border border-border bg-card p-6 shadow-panel">
-          <div className="flex flex-wrap items-end justify-between gap-6">
-            <div>
-              <h1 className="text-3xl font-semibold uppercase tracking-wide">Task Board</h1>
+      <main className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
+        {/* Unified Top Toolbar */}
+        <section className="rounded-xl border border-border bg-card px-5 py-4 shadow-panel">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <h1 className="font-display text-2xl sm:text-3xl font-semibold uppercase tracking-wide">
+                Task Board
+              </h1>
+              <span className="inline-flex items-center rounded-md bg-secondary px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-secondary-foreground">
+                {parkLabel}
+              </span>
             </div>
-            <div className="w-full max-w-xs">
+            <div className="flex items-center gap-2 sm:max-w-xs w-full">
               <label
                 htmlFor="crew"
-                className="text-xs font-semibold uppercase tracking-widest text-muted-foreground"
+                className="shrink-0 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
               >
-                Crew member on shift
+                Crew on shift:
               </label>
               <Input
                 id="crew"
                 value={store.state.crew}
                 onChange={(event) => store.setCrew(event.target.value)}
-                placeholder="Optional"
-                className="mt-1"
+                placeholder="Name / Initials (optional)"
+                title="Stamps your name on completed tasks"
+                className="h-9 w-full"
               />
-              <p className="mt-1 text-xs text-muted-foreground">
-                stamps your name on completed tasks
-              </p>
             </div>
           </div>
         </section>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[320px_1fr]">
-          {/* Calendar */}
-          <section className="h-fit rounded-xl border border-border bg-card p-4 shadow-panel">
-            <div className="flex items-center justify-between">
+        {/* 2-Column Responsive Layout */}
+        <div className="mt-6 grid gap-6 md:grid-cols-[300px_1fr] lg:grid-cols-[330px_1fr] items-start">
+          {/* Sticky Left Sidebar (Calendar) */}
+          <aside className="md:sticky md:top-20 space-y-4">
+            <section className="rounded-xl border border-border bg-card p-4 shadow-panel">
+              <div className="flex items-center justify-between">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Previous month"
+                  className="size-8"
+                  onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
+                >
+                  <ChevronLeft className="size-4" />
+                </Button>
+                <span className="font-display text-sm font-semibold uppercase tracking-wide">
+                  {month.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Next month"
+                  className="size-8"
+                  onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
+                >
+                  <ChevronRight className="size-4" />
+                </Button>
+              </div>
+
+              <div className="mt-3 grid grid-cols-7 gap-1 text-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                {WEEKDAYS.map((day) => (
+                  <span key={day}>{day[0]}</span>
+                ))}
+              </div>
+
+              <div className="mt-1 grid grid-cols-7 gap-1">
+                {days.map((day, index) => {
+                  if (!day) return <span key={`empty-${index}`} />;
+                  const key = dateKey(day);
+                  const dayStats = store.dayStats(key);
+                  const isSelected = key === selectedDate;
+                  const isToday = key === today;
+                  const allDone = dayStats.total > 0 && dayStats.done === dayStats.total;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => setSelectedDate(key)}
+                      className={cn(
+                        "relative flex aspect-square flex-col items-center justify-center rounded-md border text-sm transition-colors cursor-pointer",
+                        isSelected
+                          ? "border-primary bg-primary text-primary-foreground font-semibold shadow-xs"
+                          : isToday
+                            ? "border-primary/60 bg-muted font-medium"
+                            : "border-transparent hover:bg-muted/70",
+                      )}
+                    >
+                      <span className="tabular-nums">{day.getDate()}</span>
+                      {dayStats.total > 0 ? (
+                        <span
+                          className={cn(
+                            "mt-0.5 size-1.5 rounded-full",
+                            allDone
+                              ? "bg-emerald-500"
+                              : isSelected
+                                ? "bg-primary-foreground/90"
+                                : "bg-primary/80",
+                          )}
+                        />
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+
               <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Previous month"
-                onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
+                variant="outline"
+                size="sm"
+                className="mt-4 w-full"
+                onClick={() => {
+                  setSelectedDate(today);
+                  setMonth(startOfMonth(new Date()));
+                }}
               >
-                <ChevronLeft />
+                Jump to today
               </Button>
-              <span className="font-display text-sm font-semibold uppercase tracking-wide">
-                {month.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Next month"
-                onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
-              >
-                <ChevronRight />
-              </Button>
-            </div>
+            </section>
+          </aside>
 
-            <div className="mt-3 grid grid-cols-7 gap-1 text-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-              {WEEKDAYS.map((day) => (
-                <span key={day}>{day[0]}</span>
-              ))}
-            </div>
-
-            <div className="mt-1 grid grid-cols-7 gap-1">
-              {days.map((day, index) => {
-                if (!day) return <span key={`empty-${index}`} />;
-                const key = dateKey(day);
-                const dayStats = store.dayStats(key);
-                const isSelected = key === selectedDate;
-                const isToday = key === today;
-                const allDone = dayStats.total > 0 && dayStats.done === dayStats.total;
-                return (
-                  <button
-                    key={key}
-                    onClick={() => setSelectedDate(key)}
-                    className={cn(
-                      "relative flex aspect-square flex-col items-center justify-center rounded-md border text-sm transition-colors",
-                      isSelected
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : isToday
-                          ? "border-primary/60 bg-muted"
-                          : "border-transparent hover:bg-muted",
-                    )}
-                  >
-                    <span className="tabular-nums">{day.getDate()}</span>
-                    {dayStats.total > 0 ? (
-                      <span
-                        className={cn(
-                          "mt-0.5 size-1.5 rounded-full",
-                          allDone
-                            ? "bg-emerald-500"
-                            : isSelected
-                              ? "bg-primary-foreground/80"
-                              : "bg-primary/70",
-                        )}
-                      />
-                    ) : null}
-                  </button>
-                );
-              })}
-            </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-4 w-full"
-              onClick={() => {
-                setSelectedDate(today);
-                setMonth(startOfMonth(new Date()));
-              }}
-            >
-              Jump to today
-            </Button>
-          </section>
-
-          {/* Day list */}
-          <section className="rounded-xl border border-border bg-card p-6 shadow-panel">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+          {/* Right Main Task List */}
+          <section className="rounded-xl border border-border bg-card p-5 sm:p-6 shadow-panel">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 pb-4">
               <div>
-                <h2 className="font-display text-3xl font-semibold uppercase tracking-wide">
+                <h2 className="font-display text-2xl sm:text-3xl font-semibold uppercase tracking-wide">
                   {selectedDate === today
                     ? "Today"
                     : selected.toLocaleDateString(undefined, { weekday: "long" })}
                 </h2>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   {selected.toLocaleDateString(undefined, {
                     weekday: "long",
                     month: "long",
@@ -243,53 +252,66 @@ function TaskBoard({
               </div>
               <Button
                 variant="outline"
+                size="sm"
                 onClick={() => store.clearDay(selectedDate)}
                 disabled={stats.done === 0}
               >
-                <RotateCcw /> Uncheck all
+                <RotateCcw className="size-3.5" /> Uncheck all
               </Button>
             </div>
 
             <div className="mt-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">Progress</span>
-                <span className="tabular-nums text-muted-foreground">
+              <div className="flex items-center justify-between text-xs sm:text-sm">
+                <span className="font-semibold text-muted-foreground uppercase tracking-wider text-[11px]">
+                  Daily Progress
+                </span>
+                <span className="tabular-nums font-medium text-foreground">
                   {stats.done} of {stats.total} complete
                 </span>
               </div>
               <Progress
                 value={stats.total ? (stats.done / stats.total) * 100 : 0}
-                className="mt-2"
+                className="mt-2 h-2"
               />
             </div>
 
-            <ul className="mt-5 divide-y divide-border/70">
+            <ul className="mt-5 space-y-1.5">
               {tasks.map((task) => {
                 const key = completionKey(selectedDate, task);
                 const done = store.state.completed[key];
                 const priority = store.priorityOf(task);
                 const pStyle = PRIORITY_STYLES[priority];
                 return (
-                  <li key={key} className="group flex flex-wrap items-start gap-3 py-4">
+                  <li
+                    key={key}
+                    className={cn(
+                      "group flex items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 transition-colors",
+                      done ? "bg-muted/40 text-muted-foreground" : "hover:bg-muted/50 hover:border-border/50",
+                    )}
+                  >
                     <Checkbox
                       id={key}
                       checked={Boolean(done)}
                       onCheckedChange={() => store.toggle(selectedDate, task)}
-                      className="mt-1 size-5"
+                      className="size-5 shrink-0"
                     />
-                    <label htmlFor={key} className="min-w-40 flex-1 cursor-pointer">
+                    <label
+                      htmlFor={key}
+                      className="flex min-w-0 flex-1 cursor-pointer flex-col justify-center select-none"
+                    >
                       <span
                         className={cn(
-                          "text-base capitalize",
-                          done && "text-muted-foreground line-through decoration-primary/60",
+                          "text-sm font-medium leading-snug break-words",
+                          done && "line-through decoration-primary/60 opacity-80",
                         )}
                       >
                         {task}
                       </span>
                       {done ? (
-                        <span className="mt-0.5 flex items-center gap-1 text-xs text-primary">
-                          <CheckCircle2 className="size-3" />
-                          {done.by ? `${done.by} · ` : ""}
+                        <span className="mt-0.5 flex items-center gap-1 text-[11px] text-primary">
+                          <CheckCircle2 className="size-3 shrink-0" />
+                          {done.by ? <span className="font-semibold">{done.by}</span> : null}
+                          {done.by ? " · " : ""}
                           {new Date(done.at).toLocaleString(undefined, {
                             month: "short",
                             day: "numeric",
@@ -300,33 +322,33 @@ function TaskBoard({
                       ) : null}
                     </label>
                     <span
-                      className="flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-border px-3 text-xs text-muted-foreground"
-                      title={`Priority locked in when this task was added: ${pStyle.label}`}
+                      className="flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-border bg-background px-2.5 text-[11px] font-medium text-muted-foreground shadow-2xs"
+                      title={`Priority: ${pStyle.label}`}
                     >
                       <span className={cn("size-2 rounded-full", pStyle.dot)} />
-                      {pStyle.label}
+                      <span className="hidden xs:inline">{pStyle.label}</span>
                     </span>
                     <Button
                       variant="ghost"
                       size="icon"
                       aria-label={`Remove ${task}`}
-                      className="shrink-0 text-muted-foreground hover:text-destructive"
+                      className="size-8 shrink-0 text-muted-foreground opacity-60 transition-opacity hover:opacity-100 hover:text-destructive"
                       onClick={() => store.unscheduleTask(selectedDate, task)}
                     >
-                      <Trash2 />
+                      <Trash2 className="size-4" />
                     </Button>
                   </li>
                 );
               })}
               {tasks.length === 0 ? (
-                <li className="py-10 text-center text-sm text-muted-foreground">
-                  Nothing scheduled for this day — add a task below.
+                <li className="rounded-lg border border-dashed border-border py-12 text-center text-sm text-muted-foreground">
+                  Nothing scheduled for this day — pick from the library or add a task below.
                 </li>
               ) : null}
             </ul>
 
             <form
-              className="mt-5 flex flex-wrap gap-2 border-t border-border pt-5"
+              className="mt-6 flex flex-col gap-2.5 sm:flex-row border-t border-border/70 pt-5"
               onSubmit={(event) => {
                 event.preventDefault();
                 store.scheduleTask(selectedDate, newTask, newPriority);
@@ -337,9 +359,9 @@ function TaskBoard({
               <Input
                 value={newTask}
                 onChange={(event) => setNewTask(event.target.value)}
-                placeholder="Add a task to this day"
+                placeholder="Add a task to this day..."
                 list="task-library"
-                className="min-w-40 flex-1"
+                className="h-10 min-w-0 flex-1"
               />
               <datalist id="task-library">
                 {Object.values(store.state.library)
@@ -348,27 +370,29 @@ function TaskBoard({
                     <option key={task} value={task} />
                   ))}
               </datalist>
-              <Select
-                value={newPriority}
-                onValueChange={(value) => setNewPriority(value as Priority)}
-              >
-                <SelectTrigger className="w-36">
-                  <SelectValue placeholder="Priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PRIORITY_OPTIONS.map((option) => (
-                    <SelectItem key={option} value={option}>
-                      <span className="flex items-center gap-2">
-                        <span className={cn("size-2 rounded-full", PRIORITY_STYLES[option].dot)} />
-                        {PRIORITY_STYLES[option].label}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button type="submit" disabled={!newTask.trim()}>
-                <Plus /> Add
-              </Button>
+              <div className="flex gap-2 shrink-0">
+                <Select
+                  value={newPriority}
+                  onValueChange={(value) => setNewPriority(value as Priority)}
+                >
+                  <SelectTrigger className="h-10 w-32 shrink-0">
+                    <SelectValue placeholder="Priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PRIORITY_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        <span className="flex items-center gap-2">
+                          <span className={cn("size-2 rounded-full", PRIORITY_STYLES[option].dot)} />
+                          {PRIORITY_STYLES[option].label}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button type="submit" className="h-10 shrink-0" disabled={!newTask.trim()}>
+                  <Plus className="size-4" /> Add
+                </Button>
+              </div>
             </form>
           </section>
         </div>
