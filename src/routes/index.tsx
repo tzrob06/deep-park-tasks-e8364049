@@ -4,7 +4,6 @@ import { CheckCircle2, ChevronLeft, ChevronRight, Edit3, KeyRound, Lock, Plus, R
 import { SiteHeader } from "@/components/SiteHeader";
 import { ParkPicker } from "@/components/ParkPicker";
 import { AdminModal } from "@/components/AdminModal";
-import { ThemeSampler } from "@/components/ThemeSampler";
 import { useAdmin } from "@/lib/admin-store";
 import {
   useTaskStore,
@@ -58,20 +57,17 @@ function ParkGate() {
 
   if (!parks.hydrated) return <div className="min-h-screen topo-bg" />;
 
+  if (!parks.selected) {
+    return <ParkPicker parks={parks.parks} onSelect={parks.select} />;
+  }
+
   return (
-    <>
-      {!parks.selected ? (
-        <ParkPicker parks={parks.parks} onSelect={parks.select} />
-      ) : (
-        <TaskBoard
-          key={parks.selected}
-          parkId={parks.selected}
-          parkLabel={parks.nameFor(parks.selected)}
-          onSwitchPark={() => parks.select(null)}
-        />
-      )}
-      <ThemeSampler />
-    </>
+    <TaskBoard
+      key={parks.selected}
+      parkId={parks.selected}
+      parkLabel={parks.nameFor(parks.selected)}
+      onSwitchPark={() => parks.select(null)}
+    />
   );
 }
 

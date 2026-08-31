@@ -7,7 +7,6 @@ import { useTaskStore, todayKey, type Priority, DEFAULT_PRIORITY } from "@/lib/t
 import { useParks } from "@/lib/park-store";
 import { useAdmin } from "@/lib/admin-store";
 import { AdminModal } from "@/components/AdminModal";
-import { ThemeSampler } from "@/components/ThemeSampler";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -69,7 +68,6 @@ function LibraryPage() {
             </div>
           </div>
         </main>
-        <ThemeSampler />
       </div>
     );
   }
@@ -83,21 +81,17 @@ function LibraryPage() {
             Pick a park on the task board first — each park keeps its own task library.
           </p>
         </main>
-        <ThemeSampler />
       </div>
     );
   }
 
   return (
-    <>
-      <LibraryBoard
-        key={parks.selected}
-        parkId={parks.selected}
-        parkLabel={parks.nameFor(parks.selected)}
-        onSwitchPark={() => parks.select(null)}
-      />
-      <ThemeSampler />
-    </>
+    <LibraryBoard
+      key={parks.selected}
+      parkId={parks.selected}
+      parkLabel={parks.nameFor(parks.selected)}
+      onSwitchPark={() => parks.select(null)}
+    />
   );
 }
 
@@ -124,129 +118,134 @@ export function LibraryBoard({
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <span className="rounded-md bg-secondary px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-secondary-foreground">
-                  {parkLabel}
-                </span>
-                <span className="text-xs text-muted-foreground">· Task Library</span>
+                <h1 className="font-display text-3xl font-semibold uppercase tracking-wide">
+                  Task Library
+                </h1>
+                {admin.isAdmin && (
+                  <AdminModal
+                    defaultTab="titles"
+                    trigger={
+                      <Button variant="ghost" size="sm" className="h-7 text-xs text-primary gap-1">
+                        <Edit3 className="size-3" /> Edit Titles
+                      </Button>
+                    }
+                  />
+                )}
               </div>
-              <h1 className="mt-1 font-display text-3xl font-semibold uppercase tracking-wide">
-                Master Task Library
-              </h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                Add, rename, or remove tasks from the master library for {parkLabel}. Pinned tasks
-                will be available when planning each day.
+                {total === 0
+                  ? `No tasks in ${parkLabel}’s library yet. Add your park’s recurring tasks below to build its master library.`
+                  : `${total} tasks for ${parkLabel}. Edit the text of any task, delete what you don’t do, add your own, or drop a task straight onto today’s list.`}
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-muted-foreground">{total} total tasks</span>
+            {admin.isAdmin && (
               <Button
                 variant="outline"
-                size="sm"
                 onClick={() => {
-                  if (confirm(`Reset ${parkLabel}'s library to defaults?`)) {
-                    store.resetLibrary();
-                    toast.success("Library reset to defaults");
-                  }
+                  store.resetLibrary();
+                  toast.success(
+                    parkId === "southford"
+                      ? "Library restored to original task list"
+                      : "Task library cleared",
+                  );
                 }}
               >
-                <RotateCcw /> Reset to defaults
+                <RotateCcw className="size-3.5" />
+                {parkId === "southford" ? "Restore original list" : "Clear task list"}
               </Button>
-            </div>
+            )}
           </div>
         </section>
 
-        <div className="mt-8 grid gap-6 md:grid-cols-3">
-          {CATEGORIES.map((category) => (
-            <CategoryCard
-              key={category.id}
-              parkId={parkId}
-              categoryId={category.id}
-              defaultTitle={category.label}
-              today={today}
-              isAdmin={admin.isAdmin}
-            />
-          ))}
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          {CATEGORIES.map((category) => {
+            const categoryDisplayName = admin.config.categoryTitles[category.id] ?? category.name;
+            return (
+              <CategoryCard
+                key={category.id}
+                categoryId={category.id}
+                name={categoryDisplayName}
+                tasks={store.libraryFor(category.id)}
+                isAdmin={admin.isAdmin}
+                onRename={(task, next) => store.renameLibraryTask(category.id, task, next)}
+                onRemove={(task) => store.removeLibraryTask(category.id, task)}
+                onAdd={(task, priority) => store.addLibraryTask(category.id, task, priority)}
+                onScheduleToday={(task) => {
+                  store.scheduleTask(today, task);
+                  toast.success(`Added “${task}” to today`);
+                }}
+              />
+            );
+          })}
         </div>
       </main>
+
+      <footer className="border-t border-border/70 py-6 text-center text-xs text-muted-foreground">
+        <p>{admin.config.districtTitle}</p>
+        <p className="mt-1">Designed and Developed by Thomas Roberts</p>
+      </footer>
     </div>
   );
 }
 
 function CategoryCard({
-  parkId,
   categoryId,
-  defaultTitle,
-  today,
+  name,
+  tasks,
   isAdmin,
+  onRename,
+  onRemove,
+  onAdd,
+  onScheduleToday,
 }: {
-  parkId: string;
   categoryId: string;
-  defaultTitle: string;
-  today: string;
+  name: string;
+  tasks: string[];
   isAdmin: boolean;
+  onRename: (task: string, next: string) => void;
+  onRemove: (task: string) => void;
+  onAdd: (task: string, priority: Priority) => void;
+  onScheduleToday: (task: string) => void;
 }) {
-  const store = useTaskStore(parkId);
-  const admin = useAdmin();
-  const tasks = store.libraryFor(categoryId);
   const [draft, setDraft] = useState("");
   const [priority, setPriority] = useState<Priority>(DEFAULT_PRIORITY);
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [editText, setEditText] = useState("");
-
-  const onAdd = (task: string, prio: Priority) => {
-    store.addLibraryTask(categoryId, task, prio);
-    toast.success(`Added "${task}"`);
-  };
-
-  const onRemove = (task: string) => {
-    store.removeLibraryTask(categoryId, task);
-    toast.info(`Removed "${task}"`);
-  };
-
-  const onRename = (task: string, next: string) => {
-    store.renameLibraryTask(categoryId, task, next);
-    setEditingIndex(null);
-    toast.success(`Updated task name`);
-  };
-
-  const onScheduleToday = (task: string) => {
-    store.scheduleTask(today, task);
-    toast.success(`Scheduled for today`);
-  };
-
-  const title = admin.config.categoryTitles[categoryId] ?? defaultTitle;
 
   return (
-    <section className="flex flex-col rounded-xl border border-border bg-card p-5 shadow-panel">
-      <div className="flex items-center justify-between border-b border-border pb-3">
-        <h2 className="font-display text-xl font-semibold uppercase tracking-wide">{title}</h2>
-        <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-          {tasks.length}
-        </span>
+    <section className="rounded-xl border border-border bg-card p-5 shadow-panel">
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 className="font-display text-xl font-semibold uppercase tracking-wide">{name}</h2>
+        <span className="text-xs tabular-nums text-muted-foreground">{tasks.length} tasks</span>
       </div>
 
-      <ul className="mt-3 flex-1 space-y-2">
-        {tasks.map((task, index) => (
-          <li
-            key={task}
-            className="group flex items-center justify-between gap-2 rounded-lg border border-border/60 bg-muted/30 px-2.5 py-1.5 transition-colors hover:border-border hover:bg-muted/60"
-          >
-            {editingIndex === index && isAdmin ? (
-              <form
-                className="flex flex-1 gap-1"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  onRename(task, editText);
-                }}
-              >
+      <ul className="mt-3 divide-y divide-border/70">
+        {tasks.map((task) => (
+          <li key={`${categoryId}-${task}`} className="flex items-center gap-1 py-1.5">
+            {isAdmin ? (
+              <>
                 <Input
-                  value={editText}
-                  onChange={(event) => setEditText(event.target.value)}
-                  className="h-7 text-xs"
-                  autoFocus
-                  onBlur={() => onRename(task, editText)}
+                  defaultValue={task}
+                  onBlur={(event) => onRename(task, event.target.value)}
+                  className="h-9 flex-1 border-transparent bg-transparent px-2 capitalize shadow-none focus-visible:border-input focus-visible:bg-background"
                 />
-              </form>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Add ${task} to today`}
+                  title="Add to today"
+                  onClick={() => onScheduleToday(task)}
+                >
+                  <CalendarPlus className="size-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Delete ${task}`}
+                  className="text-muted-foreground hover:text-destructive"
+                  onClick={() => onRemove(task)}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </>
             ) : (
               <span className="flex-1 px-2 py-1.5 text-sm font-medium leading-snug">
                 {task}
