@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { CheckCircle2, ChevronLeft, ChevronRight, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { CheckCircle2, ChevronLeft, ChevronRight, Edit3, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ParkPicker } from "@/components/ParkPicker";
+import { AdminModal } from "@/components/AdminModal";
+import { useAdmin } from "@/lib/admin-store";
 import {
   useTaskStore,
   completionKey,
@@ -89,6 +91,7 @@ function TaskBoard({
   onSwitchPark: () => void;
 }) {
   const store = useTaskStore(parkId);
+  const admin = useAdmin();
   const today = todayKey();
   const [selectedDate, setSelectedDate] = useState(today);
   const [month, setMonth] = useState(() => startOfMonth(new Date()));
@@ -125,6 +128,16 @@ function TaskBoard({
               <span className="inline-flex items-center rounded-md bg-secondary px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-secondary-foreground">
                 {parkLabel}
               </span>
+              {admin.isAdmin && (
+                <AdminModal
+                  defaultTab="parks"
+                  trigger={
+                    <Button variant="ghost" size="sm" className="h-7 text-xs text-primary gap-1">
+                      <Edit3 className="size-3" /> Edit Park
+                    </Button>
+                  }
+                />
+              )}
             </div>
             <div className="flex items-center gap-2 sm:max-w-xs w-full">
               <label
@@ -399,7 +412,7 @@ function TaskBoard({
       </main>
 
       <footer className="border-t border-border/70 py-6 text-center text-xs text-muted-foreground">
-        <p>Connecticut DEEP &middot; Western District Parks Maintenance</p>
+        <p>{admin.config.districtTitle}</p>
         <p className="mt-1">Designed and Developed by Thomas Roberts</p>
       </footer>
     </div>

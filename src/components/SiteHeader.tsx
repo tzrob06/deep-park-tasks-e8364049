@@ -1,6 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { BookOpen, CalendarDays, Repeat, TreePine } from "lucide-react";
+import { BookOpen, CalendarDays, Lock, Repeat, ShieldCheck, TreePine } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAdmin } from "@/lib/admin-store";
+import { AdminModal } from "@/components/AdminModal";
 
 export function SiteHeader({
   parkLabel,
@@ -10,6 +12,7 @@ export function SiteHeader({
   onSwitchPark?: () => void;
 }) {
   const currentPath = useRouterState({ select: (s) => s.location.pathname });
+  const admin = useAdmin();
 
   return (
     <header className="sticky top-0 z-30 border-b border-border/70 bg-background/85 backdrop-blur">
@@ -20,7 +23,7 @@ export function SiteHeader({
           </span>
           <span className="leading-tight">
             <span className="block font-display text-lg font-semibold uppercase tracking-wide">
-              DEEP Park Maintenance
+              {admin.config.siteTitle}
             </span>
             <span className="block text-xs text-muted-foreground">
               {parkLabel ?? "Park maintenance task board"}
@@ -62,6 +65,33 @@ export function SiteHeader({
               <span className="hidden sm:inline">Switch park</span>
             </Button>
           ) : null}
+
+          <AdminModal
+            trigger={
+              <Button
+                variant={admin.isAdmin ? "default" : "ghost"}
+                size="sm"
+                className={`h-8 gap-1.5 text-xs ${
+                  admin.isAdmin
+                    ? "bg-primary text-primary-foreground font-semibold shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                title={admin.isAdmin ? "Supervisor Boss Control Panel" : "Boss / Supervisor Admin Access"}
+              >
+                {admin.isAdmin ? (
+                  <>
+                    <ShieldCheck className="size-3.5 text-primary-foreground" />
+                    <span className="hidden sm:inline">Boss Panel</span>
+                  </>
+                ) : (
+                  <>
+                    <Lock className="size-3.5" />
+                    <span className="hidden sm:inline">Boss Admin</span>
+                  </>
+                )}
+              </Button>
+            }
+          />
         </div>
       </div>
     </header>

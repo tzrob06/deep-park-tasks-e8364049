@@ -69,10 +69,22 @@ export function useParks() {
     [persist, select, selected],
   );
 
+  const renamePark = useCallback(
+    (id: string, newName: string) => {
+      const trimmed = newName.trim();
+      if (!trimmed) return;
+      const list = readParks().map((park) =>
+        park.id === id ? { ...park, name: trimmed } : park,
+      );
+      persist(list);
+    },
+    [persist],
+  );
+
   const nameFor = useCallback(
     (id: string) => parks.find((park) => park.id === id)?.name ?? id,
     [parks],
   );
 
-  return { parks, selected, hydrated, select, addPark, removePark, nameFor };
+  return { parks, selected, hydrated, select, addPark, removePark, renamePark, nameFor };
 }

@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { CalendarPlus, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { CalendarPlus, Edit3, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { CATEGORIES } from "@/data/tasks";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useTaskStore, todayKey, type Priority, DEFAULT_PRIORITY } from "@/lib/task-store";
 import { useParks } from "@/lib/park-store";
+import { useAdmin } from "@/lib/admin-store";
+import { AdminModal } from "@/components/AdminModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -59,7 +61,7 @@ function LibraryPage() {
   );
 }
 
-function LibraryBoard({
+export function LibraryBoard({
   parkId,
   parkLabel,
   onSwitchPark,
@@ -69,6 +71,7 @@ function LibraryBoard({
   onSwitchPark: () => void;
 }) {
   const store = useTaskStore(parkId);
+  const admin = useAdmin();
   const today = todayKey();
   const total = CATEGORIES.reduce((sum, category) => sum + store.libraryFor(category.id).length, 0);
 
@@ -80,9 +83,21 @@ function LibraryBoard({
         <section className="rounded-xl border border-border bg-card p-6 shadow-panel">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h1 className="font-display text-3xl font-semibold uppercase tracking-wide">
-                Task Library
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="font-display text-3xl font-semibold uppercase tracking-wide">
+                  Task Library
+                </h1>
+                {admin.isAdmin && (
+                  <AdminModal
+                    defaultTab="titles"
+                    trigger={
+                      <Button variant="ghost" size="sm" className="h-7 text-xs text-primary gap-1">
+                        <Edit3 className="size-3" /> Edit Titles
+                      </Button>
+                    }
+                  />
+                )}
+              </div>
               <p className="mt-1 text-sm text-muted-foreground">
                 {total === 0
                   ? `No tasks in ${parkLabel}’s library yet. Add your park’s recurring tasks below to build its master library.`
@@ -107,26 +122,29 @@ function LibraryBoard({
         </section>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
-          {CATEGORIES.map((category) => (
-            <CategoryCard
-              key={category.id}
-              categoryId={category.id}
-              name={category.name}
-              tasks={store.libraryFor(category.id)}
-              onRename={(task, next) => store.renameLibraryTask(category.id, task, next)}
-              onRemove={(task) => store.removeLibraryTask(category.id, task)}
-              onAdd={(task, priority) => store.addLibraryTask(category.id, task, priority)}
-              onScheduleToday={(task) => {
-                store.scheduleTask(today, task);
-                toast.success(`Added “${task}” to today`);
-              }}
-            />
-          ))}
+          {CATEGORIES.map((category) => {
+            const categoryDisplayName = admin.config.categoryTitles[category.id] ?? category.name;
+            return (
+              <CategoryCard
+                key={category.id}
+                categoryId={category.id}
+                name={categoryDisplayName}
+                tasks={store.libraryFor(category.id)}
+                onRename={(task, next) => store.renameLibraryTask(category.id, task, next)}
+                onRemove={(task) => store.removeLibraryTask(category.id, task)}
+                onAdd={(task, priority) => store.addLibraryTask(category.id, task, priority)}
+                onScheduleToday={(task) => {
+                  store.scheduleTask(today, task);
+                  toast.success(`Added “${task}” to today`);
+                }}
+              />
+            );
+          })}
         </div>
       </main>
 
       <footer className="border-t border-border/70 py-6 text-center text-xs text-muted-foreground">
-        <p>Connecticut DEEP &middot; Western District Parks Maintenance</p>
+        <p>{admin.config.districtTitle}</p>
         <p className="mt-1">Designed and Developed by Thomas Roberts</p>
       </footer>
     </div>

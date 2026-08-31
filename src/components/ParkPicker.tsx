@@ -1,19 +1,10 @@
 import { useState } from "react";
-import { ArrowRight, MapPin, Plus, Trash2, TreePine } from "lucide-react";
+import { ArrowRight, Lock, MapPin, Plus, ShieldCheck, Trash2, TreePine } from "lucide-react";
 import type { Park } from "@/data/parks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-const PARK_METADATA: Record<string, { subtitle: string; tag?: string }> = {
-  southford: {
-    subtitle: "A Connecticut State Park",
-    tag: "Southbury / Oxford, CT",
-  },
-  putnam: {
-    subtitle: "A Connecticut State Park",
-    tag: "Redding, CT",
-  },
-};
+import { useAdmin } from "@/lib/admin-store";
+import { AdminModal } from "@/components/AdminModal";
 
 export function ParkPicker({
   parks,
@@ -27,25 +18,55 @@ export function ParkPicker({
   onRemove: (id: string) => void;
 }) {
   const [name, setName] = useState("");
+  const admin = useAdmin();
 
   return (
     <div className="flex min-h-screen items-center justify-center topo-bg px-4 py-10 sm:py-16">
       <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-panel">
-        <div className="flex items-center gap-3 border-b border-border/70 pb-5">
-          <span className="flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
-            <TreePine className="size-6" />
-          </span>
-          <div className="leading-tight">
-            <h1 className="font-display text-2xl font-bold uppercase tracking-wide text-foreground">
-              DEEP Park Maintenance
-            </h1>
-            <p className="text-xs text-muted-foreground">Select your park work site</p>
+        <div className="flex items-center justify-between border-b border-border/70 pb-5">
+          <div className="flex items-center gap-3">
+            <span className="flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
+              <TreePine className="size-6" />
+            </span>
+            <div className="leading-tight">
+              <h1 className="font-display text-2xl font-bold uppercase tracking-wide text-foreground">
+                {admin.config.siteTitle}
+              </h1>
+              <p className="text-xs text-muted-foreground">{admin.config.siteSubtitle}</p>
+            </div>
           </div>
+
+          <AdminModal
+            trigger={
+              <Button
+                variant={admin.isAdmin ? "default" : "outline"}
+                size="sm"
+                className={`h-8 gap-1.5 text-xs ${
+                  admin.isAdmin
+                    ? "bg-primary text-primary-foreground font-semibold"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                title={admin.isAdmin ? "Supervisor Boss Control Panel" : "Boss / Supervisor Admin Access"}
+              >
+                {admin.isAdmin ? (
+                  <>
+                    <ShieldCheck className="size-3.5" />
+                    <span className="hidden sm:inline">Boss Panel</span>
+                  </>
+                ) : (
+                  <>
+                    <Lock className="size-3.5" />
+                    <span className="hidden sm:inline">Admin</span>
+                  </>
+                )}
+              </Button>
+            }
+          />
         </div>
 
         <div className="mt-6 space-y-2.5">
           {parks.map((park) => {
-            const meta = PARK_METADATA[park.id];
+            const meta = admin.config.parkMetadata[park.id];
             const isStatePark = Boolean(meta?.tag);
 
             return (
@@ -106,9 +127,12 @@ export function ParkPicker({
             <Plus className="size-4" /> Add
           </Button>
         </form>
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          Your selected park is remembered on this device. Each park keeps its own calendar & tasks.
-        </p>
+
+        <div className="mt-4 flex items-center justify-between border-t border-border/40 pt-3">
+          <p className="text-center text-xs text-muted-foreground flex-1">
+            Your selected park is remembered on this device.
+          </p>
+        </div>
       </div>
     </div>
   );
