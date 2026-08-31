@@ -99,8 +99,13 @@ export function useTaskStore(parkId: string) {
     setState((prev) => {
       const key = completionKey(date, task);
       const completed = { ...prev.completed };
-      if (completed[key]) delete completed[key];
-      else completed[key] = { at: new Date().toISOString(), by: prev.crew.trim() };
+      if (completed[key]) {
+        delete completed[key];
+      } else {
+        const crewName = prev.crew.trim();
+        if (!crewName) return prev;
+        completed[key] = { at: new Date().toISOString(), by: crewName };
+      }
       return { ...prev, completed };
     });
   }, []);

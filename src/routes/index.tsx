@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { CheckCircle2, ChevronLeft, ChevronRight, Edit3, KeyRound, Lock, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ParkPicker } from "@/components/ParkPicker";
@@ -20,6 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const PRIORITY_STYLES: Record<Priority, { dot: string; label: string }> = {
   high: { dot: "bg-red-500", label: "High" },
@@ -98,6 +99,18 @@ function TaskBoard({
 
   const tasks = store.tasksForDay(selectedDate);
   const stats = store.dayStats(selectedDate);
+  const crewInputRef = useRef<HTMLInputElement>(null);
+  const [crewWarning, setCrewWarning] = useState(false);
+
+  const handleToggleTask = (task: string, isCurrentlyDone: boolean) => {
+    if (!isCurrentlyDone && !store.state.crew.trim()) {
+      setCrewWarning(true);
+      crewInputRef.current?.focus();
+      toast.error("Please enter your name or initials in 'Crew on shift' before completing tasks.");
+      return;
+    }
+    store.toggle(selectedDate, task);
+  };
 
   const days = useMemo(() => {
     const first = startOfMonth(month);
@@ -142,15 +155,24 @@ function TaskBoard({
                 htmlFor="crew"
                 className="shrink-0 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
               >
-                Crew on shift:
+                Crew on shift <span className="text-destructive font-bold" title="Required to complete tasks">*</span>:
               </label>
               <Input
+                ref={crewInputRef}
                 id="crew"
                 value={store.state.crew}
-                onChange={(event) => store.setCrew(event.target.value)}
-                placeholder="Name / Initials (optional)"
-                title="Stamps your name on completed tasks"
-                className="h-9 w-full"
+                onChange={(event) => {
+                  store.setCrew(event.target.value);
+                  if (crewWarning && event.target.value.trim()) {
+                    setCrewWarning(false);
+                  }
+                }}
+                placeholder="Name / Initials (required)"
+                title="Your name or initials are required to complete tasks"
+                className={cn(
+                  "h-9 w-full transition-all",
+                  crewWarning && !store.state.crew.trim() && "border-destructive ring-2 ring-destructive/40 bg-destructive/5",
+                )}
               />
             </div>
           </div>
@@ -303,11 +325,15 @@ function TaskBoard({
                     <Checkbox
                       id={key}
                       checked={Boolean(done)}
-                      onCheckedChange={() => store.toggle(selectedDate, task)}
+                      onCheckedChange={() => handleToggleTask(task, Boolean(done))}
                       className="size-5 shrink-0"
                     />
                     <label
                       htmlFor={key}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleToggleTask(task, Boolean(done));
+                      }}
                       className="flex min-w-0 flex-1 cursor-pointer flex-col justify-center select-none"
                     >
                       <span
@@ -321,8 +347,8 @@ function TaskBoard({
                       {done ? (
                         <span className="mt-0.5 flex items-center gap-1 text-[11px] text-primary">
                           <CheckCircle2 className="size-3 shrink-0" />
-                          {done.by ? <span className="font-semibold">{done.by}</span> : null}
-                          {done.by ? " · " : ""}
+                          <span className="font-semibold">{done.by}</span>
+                          {" · "}
                           {new Date(done.at).toLocaleString(undefined, {
                             month: "short",
                             day: "numeric",
