@@ -110,7 +110,7 @@ export function CrewNotesSection({
     }
 
     const created = onAddNote(selectedDate, noteText, {
-      isPinned,
+      isPinned: isAdmin ? isPinned : false,
       photo: attachedPhoto ?? undefined,
       photoName: attachedPhotoName ?? undefined,
     });
@@ -200,21 +200,13 @@ export function CrewNotesSection({
 
       {/* 3. ADD NOTE FORM */}
       <form onSubmit={handleSubmit} className="border-t border-border/70 pt-4 space-y-3">
-        <div className="relative">
+        <div>
           <Input
             value={noteText}
             onChange={(e) => setNoteText(e.target.value)}
             placeholder="Leave a shift note, equipment update, or repair notice..."
-            className="h-10 text-sm pr-10"
+            className="h-10 text-sm"
           />
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            title="Attach a field photo"
-            className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
-          >
-            <Camera className="size-5" />
-          </button>
           <input
             ref={fileInputRef}
             type="file"
@@ -259,19 +251,23 @@ export function CrewNotesSection({
           <p className="text-xs text-primary animate-pulse">Processing photo...</p>
         )}
 
-        {/* Bottom controls: Pin Checkbox & Submit */}
+        {/* Bottom controls: Pin Checkbox (Boss only) & Submit */}
         <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-          <label className="flex items-center gap-2 cursor-pointer text-xs text-muted-foreground hover:text-foreground select-none">
-            <Checkbox
-              checked={isPinned}
-              onCheckedChange={(checked) => setIsPinned(Boolean(checked))}
-              className="size-4"
-            />
-            <span className="flex items-center gap-1">
-              <Pin className="size-3.5 text-amber-500" />
-              Pin note to park (visible on all shifts)
-            </span>
-          </label>
+          {isAdmin ? (
+            <label className="flex items-center gap-2 cursor-pointer text-xs text-muted-foreground hover:text-foreground select-none">
+              <Checkbox
+                checked={isPinned}
+                onCheckedChange={(checked) => setIsPinned(Boolean(checked))}
+                className="size-4"
+              />
+              <span className="flex items-center gap-1">
+                <Pin className="size-3.5 text-amber-500" />
+                Pin note to park (visible on all shifts)
+              </span>
+            </label>
+          ) : (
+            <div />
+          )}
 
           <div className="flex items-center gap-2">
             <Button
@@ -380,31 +376,33 @@ function NoteCard({
           )}
         </div>
 
-        {/* Action buttons */}
-        <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
-          <button
-            type="button"
-            onClick={() => onTogglePin(note.id)}
-            title={note.isPinned ? "Unpin note" : "Pin note to top"}
-            className={cn(
-              "p-1 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer",
-              note.isPinned && "text-amber-500 hover:text-amber-600",
-            )}
-          >
-            {note.isPinned ? <PinOff className="size-3.5" /> : <Pin className="size-3.5" />}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              onDelete(note.id);
-              toast.info("Note removed");
-            }}
-            title="Delete note"
-            className="p-1 rounded text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
-          >
-            <Trash2 className="size-3.5" />
-          </button>
-        </div>
+        {/* Action buttons (Restricted to Boss Mode) */}
+        {isAdmin && (
+          <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+            <button
+              type="button"
+              onClick={() => onTogglePin(note.id)}
+              title={note.isPinned ? "Unpin note" : "Pin note to top"}
+              className={cn(
+                "p-1 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer",
+                note.isPinned && "text-amber-500 hover:text-amber-600",
+              )}
+            >
+              {note.isPinned ? <PinOff className="size-3.5" /> : <Pin className="size-3.5" />}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onDelete(note.id);
+                toast.info("Note removed");
+              }}
+              title="Delete note"
+              className="p-1 rounded text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+            >
+              <Trash2 className="size-3.5" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Note Text */}

@@ -16,6 +16,8 @@ import { useParks } from "@/lib/park-store";
 import {
   Building2,
   Check,
+  Eye,
+  EyeOff,
   FolderPlus,
   KeyRound,
   Lock,
@@ -51,6 +53,7 @@ export function AdminModal({
 
   // Login form state
   const [passwordInput, setPasswordInput] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState(false);
 
   // Site titles state
@@ -183,20 +186,36 @@ export function AdminModal({
               <div className="relative">
                 <Input
                   id="admin-password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={passwordInput}
                   onChange={(e) => {
                     setPasswordInput(e.target.value);
                     setLoginError(false);
                   }}
                   placeholder="Enter boss password..."
-                  className="pr-10 h-10"
+                  className="pr-10 h-10 text-base sm:text-sm"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  autoComplete="current-password"
+                  enterKeyHint="go"
                   autoFocus
                 />
-                <Lock className="absolute right-3 top-2.5 size-4.5 text-muted-foreground pointer-events-none" />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  title={showPassword ? "Hide password" : "Show password"}
+                  className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground cursor-pointer"
+                >
+                  {showPassword ? (
+                    <EyeOff className="size-4.5" />
+                  ) : (
+                    <Eye className="size-4.5" />
+                  )}
+                </button>
               </div>
               {loginError && (
-                <p className="text-xs text-destructive flex items-center gap-1 mt-1">
+                <p className="text-xs text-destructive flex items-center gap-1 mt-1 font-medium">
                   <ShieldAlert className="size-3.5" /> Incorrect passcode. Please try again.
                 </p>
               )}
@@ -206,7 +225,7 @@ export function AdminModal({
                 Cancel
               </Button>
               <Button type="submit">
-                <KeyRound className="size-4" /> Unlock Admin
+                <KeyRound className="size-4" /> Unlock Boss Mode
               </Button>
             </div>
           </form>

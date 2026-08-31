@@ -85,12 +85,12 @@ export function SiteHeader({
           <AdminModal
             trigger={
               <Button
-                variant={admin.isAdmin ? "default" : "ghost"}
+                variant={admin.isAdmin ? "default" : "outline"}
                 size="sm"
                 className={`h-8 gap-1.5 text-xs ${
                   admin.isAdmin
                     ? "bg-primary text-primary-foreground font-semibold shadow-xs"
-                    : "text-muted-foreground hover:text-foreground"
+                    : "text-foreground hover:bg-muted"
                 }`}
                 title={admin.isAdmin ? "Supervisor Boss Control Panel" : "Boss / Supervisor Admin Access"}
               >
@@ -98,11 +98,13 @@ export function SiteHeader({
                   <>
                     <ShieldCheck className="size-3.5 text-primary-foreground" />
                     <span className="hidden sm:inline">Boss Panel</span>
+                    <span className="sm:hidden">Boss</span>
                   </>
                 ) : (
                   <>
                     <Lock className="size-3.5" />
                     <span className="hidden sm:inline">Boss Admin</span>
+                    <span className="sm:hidden">Boss</span>
                   </>
                 )}
               </Button>
