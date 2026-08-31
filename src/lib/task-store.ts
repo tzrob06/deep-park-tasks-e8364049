@@ -20,8 +20,12 @@ export type StoreState = {
   crew: string;
 };
 
-export const defaultLibrary = (): Record<string, string[]> =>
-  Object.fromEntries(CATEGORIES.map((category) => [category.id, [...category.tasks]]));
+export const defaultLibrary = (parkId?: string): Record<string, string[]> => {
+  if (parkId && parkId !== "southford") {
+    return Object.fromEntries(CATEGORIES.map((category) => [category.id, []]));
+  }
+  return Object.fromEntries(CATEGORIES.map((category) => [category.id, [...category.tasks]]));
+};
 
 const EMPTY: StoreState = {
   library: {},
@@ -37,21 +41,36 @@ export const todayKey = () => dateKey(new Date());
 export const completionKey = (date: string, task: string) => `${date}::${task}`;
 
 function read(parkId: string): StoreState {
-  if (typeof window === "undefined") return { ...EMPTY, library: defaultLibrary() };
+  const fallbackLibrary = defaultLibrary(parkId);
+  if (typeof window === "undefined") return { ...EMPTY, library: fallbackLibrary };
   try {
     const raw = window.localStorage.getItem(storageKey(parkId));
-    if (!raw) return { ...EMPTY, library: defaultLibrary() };
+    if (!raw) return { ...EMPTY, library: fallbackLibrary };
     const parsed = JSON.parse(raw) as Partial<StoreState>;
-    const library = { ...(parsed.library ?? defaultLibrary()) };
+    let library = { ...(parsed.library ?? fallbackLibrary) };
     // Legacy state may still hold the removed "Daily Tasks" category — drop it.
     delete library["daily"];
+
+    // If this is not Southford, and the library is identical to Southford's default list, clear it to start clean.
+    if (parkId !== "southford" && parsed.library) {
+      const southfordTasks = defaultLibrary("southford");
+      const isExactDefault = Object.keys(southfordTasks).every((cat) => {
+        const current = parsed.library?.[cat] ?? [];
+        const original = southfordTasks[cat] ?? [];
+        return current.length === original.length && current.every((t, i) => t === original[i]);
+      });
+      if (isExactDefault) {
+        library = defaultLibrary(parkId);
+      }
+    }
+
     return {
       ...EMPTY,
       ...parsed,
       library,
     };
   } catch {
-    return { ...EMPTY, library: defaultLibrary() };
+    return { ...EMPTY, library: fallbackLibrary };
   }
 }
 
@@ -179,8 +198,8 @@ export function useTaskStore(parkId: string) {
   }, []);
 
   const resetLibrary = useCallback(() => {
-    setState((prev) => ({ ...prev, library: defaultLibrary() }));
-  }, []);
+    setState((prev) => ({ ...prev, library: defaultLibrary(parkId) }));
+  }, [parkId]);
 
   // --- Day view ------------------------------------------------------------
 

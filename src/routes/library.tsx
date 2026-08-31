@@ -84,18 +84,24 @@ function LibraryBoard({
                 Task Library
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                {total} tasks for {parkLabel}. Edit the text of any task, delete what you don't do,
-                add your own, or drop a task straight onto today's list.
+                {total === 0
+                  ? `No tasks in ${parkLabel}’s library yet. Add your park’s recurring tasks below to build its master library.`
+                  : `${total} tasks for ${parkLabel}. Edit the text of any task, delete what you don’t do, add your own, or drop a task straight onto today’s list.`}
               </p>
             </div>
             <Button
               variant="outline"
               onClick={() => {
                 store.resetLibrary();
-                toast.success("Library restored to the original list");
+                toast.success(
+                  parkId === "southford"
+                    ? "Library restored to original task list"
+                    : "Task library cleared",
+                );
               }}
             >
-              <RotateCcw /> Restore original list
+              <RotateCcw className="size-3.5" />
+              {parkId === "southford" ? "Restore original list" : "Clear task list"}
             </Button>
           </div>
         </section>
