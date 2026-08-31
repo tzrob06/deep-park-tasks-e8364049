@@ -401,16 +401,8 @@ function TaskBoard({
                   value={newTask}
                   onChange={(event) => setNewTask(event.target.value)}
                   placeholder="Add a task to this day..."
-                  list="task-library"
                   className="h-10 min-w-0 flex-1"
                 />
-                <datalist id="task-library">
-                  {Object.values(store.state.library)
-                    .flat()
-                    .map((task) => (
-                      <option key={task} value={task} />
-                    ))}
-                </datalist>
                 <div className="flex gap-2 shrink-0">
                   <Select
                     value={newPriority}
