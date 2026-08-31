@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { ArrowRight, MapPin, Plus, Trash2, TreePine } from "lucide-react";
 import type { Park } from "@/data/parks";
+import { SOUTHFORD_FALLS_IMAGE } from "@/data/assets";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 const PARK_METADATA: Record<string, { image?: string; subtitle: string; tag?: string }> = {
   southford: {
-    image: "/images/southford-falls.jpg",
+    image: SOUTHFORD_FALLS_IMAGE,
     subtitle: "A Connecticut State Park",
     tag: "Southbury / Oxford, CT",
   },
