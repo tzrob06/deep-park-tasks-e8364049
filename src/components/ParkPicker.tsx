@@ -1,13 +1,11 @@
 import { useState } from "react";
 import { ArrowRight, MapPin, Plus, Trash2, TreePine } from "lucide-react";
 import type { Park } from "@/data/parks";
-import { SOUTHFORD_FALLS_IMAGE } from "@/data/assets";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const PARK_METADATA: Record<string, { image?: string; subtitle: string; tag?: string }> = {
+const PARK_METADATA: Record<string, { subtitle: string; tag?: string }> = {
   southford: {
-    image: SOUTHFORD_FALLS_IMAGE,
     subtitle: "A Connecticut State Park",
     tag: "Southbury / Oxford, CT",
   },
@@ -45,64 +43,10 @@ export function ParkPicker({
           </div>
         </div>
 
-        <div className="mt-6 space-y-3">
+        <div className="mt-6 space-y-2.5">
           {parks.map((park) => {
             const meta = PARK_METADATA[park.id];
-            const isFeatured = park.id === "southford" && meta?.image;
-
-            if (isFeatured) {
-              return (
-                <div
-                  key={park.id}
-                  className="group relative overflow-hidden rounded-xl border-2 border-border/80 bg-card transition-all duration-300 hover:border-primary hover:shadow-md"
-                >
-                  <button
-                    type="button"
-                    onClick={() => onSelect(park.id)}
-                    className="relative flex w-full flex-col text-left cursor-pointer"
-                  >
-                    {/* Sign Cover Image */}
-                    <div className="relative h-44 w-full overflow-hidden bg-muted">
-                      <img
-                        src={meta.image}
-                        alt="Southford Falls State Park sign"
-                        className="h-full w-full object-cover object-[center_30%] transition-transform duration-500 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
-                      <div className="absolute bottom-3.5 left-4 right-4 flex items-end justify-between">
-                        <div>
-                          <span className="inline-block rounded-md bg-sun/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-sun-foreground shadow-2xs">
-                            {meta.tag ?? "State Park"}
-                          </span>
-                          <h2 className="mt-1 font-display text-2xl font-bold uppercase tracking-wide text-white drop-shadow-sm">
-                            {park.name}
-                          </h2>
-                          <p className="text-xs font-medium text-white/80">
-                            {meta.subtitle}
-                          </p>
-                        </div>
-                        <span className="flex size-9 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-xs transition-transform duration-300 group-hover:translate-x-1 group-hover:bg-primary group-hover:text-primary-foreground">
-                          <ArrowRight className="size-4" />
-                        </span>
-                      </div>
-                    </div>
-                  </button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label={`Remove ${park.name}`}
-                    title="Remove park"
-                    className="absolute top-2 right-2 size-8 rounded-full bg-black/40 text-white/80 backdrop-blur-xs hover:bg-destructive hover:text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onRemove(park.id);
-                    }}
-                  >
-                    <Trash2 className="size-3.5" />
-                  </Button>
-                </div>
-              );
-            }
+            const isStatePark = Boolean(meta?.tag);
 
             return (
               <div
@@ -115,7 +59,7 @@ export function ParkPicker({
                   className="flex min-w-0 flex-1 items-center gap-3.5 text-left cursor-pointer"
                 >
                   <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                    <MapPin className="size-5" />
+                    {isStatePark ? <TreePine className="size-5" /> : <MapPin className="size-5" />}
                   </span>
                   <div className="min-w-0 flex-1">
                     <h2 className="font-display text-lg font-semibold uppercase tracking-wide text-foreground group-hover:text-primary transition-colors truncate">
@@ -158,7 +102,7 @@ export function ParkPicker({
             placeholder="Add another park name..."
             className="h-10 flex-1"
           />
-          <Button type="submit" className="h-10" disabled={!name.trim()}>
+          <Button type="submit" className="h-10 shrink-0" disabled={!name.trim()}>
             <Plus className="size-4" /> Add
           </Button>
         </form>
