@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { CATEGORIES } from "@/data/tasks";
 
-const storageKey = (parkId: string) => `deep-maintenance-state-v2::${parkId}`;
+const storageKey = (parkId: string) => `deep-maintenance-state-v3::${parkId}`;
 
 export type Completion = { at: string; by: string };
 export type Priority = "low" | "medium" | "high";
@@ -44,31 +44,37 @@ function read(parkId: string): StoreState {
   const fallbackLibrary = defaultLibrary(parkId);
   if (typeof window === "undefined") return { ...EMPTY, library: fallbackLibrary };
   try {
-    const raw = window.localStorage.getItem(storageKey(parkId));
-    if (!raw) return { ...EMPTY, library: fallbackLibrary };
-    const parsed = JSON.parse(raw) as Partial<StoreState>;
-    let library = { ...(parsed.library ?? fallbackLibrary) };
-    // Legacy state may still hold the removed "Daily Tasks" category — drop it.
-    delete library["daily"];
-
-    // If this is not Southford, and the library is identical to Southford's default list, clear it to start clean.
-    if (parkId !== "southford" && parsed.library) {
-      const southfordTasks = defaultLibrary("southford");
-      const isExactDefault = Object.keys(southfordTasks).every((cat) => {
-        const current = parsed.library?.[cat] ?? [];
-        const original = southfordTasks[cat] ?? [];
-        return current.length === original.length && current.every((t, i) => t === original[i]);
-      });
-      if (isExactDefault) {
-        library = defaultLibrary(parkId);
-      }
+    const rawV3 = window.localStorage.getItem(storageKey(parkId));
+    if (rawV3) {
+      const parsed = JSON.parse(rawV3) as Partial<StoreState>;
+      const library = { ...(parsed.library ?? fallbackLibrary) };
+      delete library["daily"];
+      return {
+        ...EMPTY,
+        ...parsed,
+        library,
+      };
     }
 
-    return {
-      ...EMPTY,
-      ...parsed,
-      library,
-    };
+    if (parkId === "southford") {
+      const rawV2 = window.localStorage.getItem(`deep-maintenance-state-v2::southford`);
+      if (rawV2) {
+        const parsed = JSON.parse(rawV2) as Partial<StoreState>;
+        const library = { ...(parsed.library ?? defaultLibrary("southford")) };
+        delete library["daily"];
+        return {
+          ...EMPTY,
+          ...parsed,
+          library,
+        };
+      }
+      return { ...EMPTY, library: defaultLibrary("southford") };
+    }
+
+    // For all non-Southford parks (including Putnam), start with a clean empty library
+    // and wipe any legacy v2 key that might contain Southford tasks
+    window.localStorage.removeItem(`deep-maintenance-state-v2::${parkId}`);
+    return { ...EMPTY, library: defaultLibrary(parkId) };
   } catch {
     return { ...EMPTY, library: fallbackLibrary };
   }
