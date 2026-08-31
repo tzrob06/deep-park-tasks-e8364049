@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { CalendarPlus, Edit3, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { CalendarPlus, Edit3, KeyRound, Lock, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { CATEGORIES } from "@/data/tasks";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useTaskStore, todayKey, type Priority, DEFAULT_PRIORITY } from "@/lib/task-store";
@@ -35,8 +35,42 @@ export const Route = createFileRoute("/library")({
 
 function LibraryPage() {
   const parks = useParks();
+  const admin = useAdmin();
 
-  if (!parks.hydrated) return <div className="min-h-screen topo-bg" />;
+  if (!parks.hydrated || !admin.hydrated) return <div className="min-h-screen topo-bg" />;
+
+  if (!admin.isAdmin) {
+    return (
+      <div className="min-h-screen topo-bg">
+        <SiteHeader
+          parkLabel={parks.selected ? parks.nameFor(parks.selected) : undefined}
+          onSwitchPark={parks.selected ? () => parks.select(null) : undefined}
+        />
+        <main className="mx-auto max-w-md px-4 py-16 text-center">
+          <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-panel space-y-4">
+            <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+              <Lock className="size-6" />
+            </div>
+            <h1 className="font-display text-xl font-bold uppercase tracking-wide text-foreground">
+              Boss Mode Required
+            </h1>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              The Task Library is restricted to supervisors. Please unlock Boss Mode to view and manage master park tasks.
+            </p>
+            <div className="pt-2">
+              <AdminModal
+                trigger={
+                  <Button className="w-full gap-2">
+                    <KeyRound className="size-4" /> Unlock Boss Mode
+                  </Button>
+                }
+              />
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   if (!parks.selected) {
     return (

@@ -8,8 +8,8 @@ export function SiteHeader({
   parkLabel,
   onSwitchPark,
 }: {
-  parkLabel?: string;
-  onSwitchPark?: () => void;
+  parkLabel?: string | undefined;
+  onSwitchPark?: (() => void) | undefined;
 }) {
   const currentPath = useRouterState({ select: (s) => s.location.pathname });
   const admin = useAdmin();
@@ -45,18 +45,20 @@ export function SiteHeader({
               <span className="hidden sm:inline">Daily Board</span>
               <span className="sm:hidden">Board</span>
             </Link>
-            <Link
-              to="/library"
-              className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors ${
-                currentPath === "/library"
-                  ? "bg-secondary text-secondary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-            >
-              <BookOpen className="size-3.5" />
-              <span className="hidden sm:inline">Task Library</span>
-              <span className="sm:hidden">Library</span>
-            </Link>
+            {admin.isAdmin && (
+              <Link
+                to="/library"
+                className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors ${
+                  currentPath === "/library"
+                    ? "bg-secondary text-secondary-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                <BookOpen className="size-3.5" />
+                <span className="hidden sm:inline">Task Library</span>
+                <span className="sm:hidden">Library</span>
+              </Link>
+            )}
           </nav>
 
           {onSwitchPark ? (

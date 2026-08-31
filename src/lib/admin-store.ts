@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useSyncExternalStore } from "react";
 
 const ADMIN_STORAGE_KEY = "deep-admin-config-v1";
 const ADMIN_AUTH_KEY = "deep-admin-session-v1";
@@ -57,68 +57,132 @@ function readConfig(): AdminConfig {
   }
 }
 
-export function useAdmin() {
-  const [config, setConfig] = useState<AdminConfig>(DEFAULT_CONFIG);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [hydrated, setHydrated] = useState<boolean>(false);
+function readAuth(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(ADMIN_AUTH_KEY) === "true";
+}
 
-  useEffect(() => {
-    setConfig(readConfig());
-    const authSession = window.localStorage.getItem(ADMIN_AUTH_KEY);
-    if (authSession === "true") {
-      setIsAdmin(true);
-    }
-    setHydrated(true);
+type AdminState = {
+  config: AdminConfig;
+  isAdmin: boolean;
+  hydrated: boolean;
+};
+
+let currentState: AdminState = {
+  config: DEFAULT_CONFIG,
+  isAdmin: false,
+  hydrated: false,
+};
+
+const listeners = new Set<() => void>();
+
+function notify() {
+  for (const listener of listeners) {
+    listener();
+  }
+}
+
+function updateState(updater: (prev: AdminState) => AdminState) {
+  currentState = updater(currentState);
+  notify();
+}
+
+if (typeof window !== "undefined") {
+  currentState = {
+    config: readConfig(),
+    isAdmin: readAuth(),
+    hydrated: true,
+  };
+}
+
+export function useAdmin() {
+  const subscribe = useCallback((listener: () => void) => {
+    listeners.add(listener);
+    return () => {
+      listeners.delete(listener);
+    };
   }, []);
 
+  const getSnapshot = useCallback(() => currentState, []);
+  const getServerSnapshot = useCallback(
+    () => ({
+      config: DEFAULT_CONFIG,
+      isAdmin: false,
+      hydrated: false,
+    }),
+    [],
+  );
+
+  const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+
+  useEffect(() => {
+    if (!state.hydrated) {
+      updateState((prev) => ({
+        ...prev,
+        config: readConfig(),
+        isAdmin: readAuth(),
+        hydrated: true,
+      }));
+    }
+  }, [state.hydrated]);
+
   const persistConfig = useCallback((newConfig: AdminConfig) => {
-    setConfig(newConfig);
     if (typeof window !== "undefined") {
       window.localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(newConfig));
     }
+    updateState((prev) => ({
+      ...prev,
+      config: newConfig,
+    }));
   }, []);
 
   const login = useCallback((password: string): boolean => {
     const current = readConfig();
     if (password.trim() === current.passwordHash) {
-      setIsAdmin(true);
       if (typeof window !== "undefined") {
         window.localStorage.setItem(ADMIN_AUTH_KEY, "true");
       }
+      updateState((prev) => ({
+        ...prev,
+        isAdmin: true,
+      }));
       return true;
     }
     return false;
   }, []);
 
   const logout = useCallback(() => {
-    setIsAdmin(false);
     if (typeof window !== "undefined") {
       window.localStorage.removeItem(ADMIN_AUTH_KEY);
     }
+    updateState((prev) => ({
+      ...prev,
+      isAdmin: false,
+    }));
   }, []);
 
   const changePassword = useCallback(
     (newPassword: string) => {
       const trimmed = newPassword.trim();
       if (!trimmed) return false;
-      const updated = { ...config, passwordHash: trimmed };
+      const updated = { ...state.config, passwordHash: trimmed };
       persistConfig(updated);
       return true;
     },
-    [config, persistConfig],
+    [state.config, persistConfig],
   );
 
   const updateSiteTitle = useCallback(
     (siteTitle: string, siteSubtitle?: string, districtTitle?: string) => {
       const updated: AdminConfig = {
-        ...config,
+        ...state.config,
         siteTitle: siteTitle.trim() || DEFAULT_CONFIG.siteTitle,
-        siteSubtitle: siteSubtitle !== undefined ? siteSubtitle.trim() : config.siteSubtitle,
+        siteSubtitle: siteSubtitle !== undefined ? siteSubtitle.trim() : state.config.siteSubtitle,
         districtTitle: districtTitle?.trim() || DEFAULT_CONFIG.districtTitle,
       };
       persistConfig(updated);
     },
-    [config, persistConfig],
+    [state.config, persistConfig],
   );
 
   const updateCategoryTitle = useCallback(
@@ -126,29 +190,29 @@ export function useAdmin() {
       const trimmed = newTitle.trim();
       if (!trimmed) return;
       const updated: AdminConfig = {
-        ...config,
+        ...state.config,
         categoryTitles: {
-          ...config.categoryTitles,
+          ...state.config.categoryTitles,
           [categoryId]: trimmed,
         },
       };
       persistConfig(updated);
     },
-    [config, persistConfig],
+    [state.config, persistConfig],
   );
 
   const updateParkMetadata = useCallback(
     (parkId: string, metadata: { subtitle: string; tag?: string }) => {
       const updated: AdminConfig = {
-        ...config,
+        ...state.config,
         parkMetadata: {
-          ...config.parkMetadata,
+          ...state.config.parkMetadata,
           [parkId]: metadata,
         },
       };
       persistConfig(updated);
     },
-    [config, persistConfig],
+    [state.config, persistConfig],
   );
 
   const resetToDefaults = useCallback(() => {
@@ -156,9 +220,9 @@ export function useAdmin() {
   }, [persistConfig]);
 
   return {
-    config,
-    isAdmin,
-    hydrated,
+    config: state.config,
+    isAdmin: state.isAdmin,
+    hydrated: state.hydrated,
     login,
     logout,
     changePassword,

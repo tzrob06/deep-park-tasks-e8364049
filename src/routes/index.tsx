@@ -61,8 +61,6 @@ function ParkGate() {
       <ParkPicker
         parks={parks.parks}
         onSelect={parks.select}
-        onAdd={parks.addPark}
-        onRemove={parks.removePark}
       />
     );
   }

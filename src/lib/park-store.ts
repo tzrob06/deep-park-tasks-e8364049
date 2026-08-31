@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { PARKS, type Park } from "@/data/parks";
 
 const PARKS_KEY = "deep-parks-v1";
@@ -23,28 +23,96 @@ function readParks(): Park[] {
   }
 }
 
-export function useParks() {
-  const [parks, setParks] = useState<Park[]>(PARKS);
-  const [selected, setSelected] = useState<string | null>(null);
-  const [hydrated, setHydrated] = useState(false);
+function readSelected(): string | null {
+  if (typeof window === "undefined") return null;
+  const list = readParks();
+  const stored = window.localStorage.getItem(SELECTED_KEY);
+  return stored && list.some((p) => p.id === stored) ? stored : null;
+}
 
-  useEffect(() => {
-    const list = readParks();
-    setParks(list);
-    const stored = window.localStorage.getItem(SELECTED_KEY);
-    setSelected(stored && list.some((park) => park.id === stored) ? stored : null);
-    setHydrated(true);
+type ParksState = {
+  parks: Park[];
+  selected: string | null;
+  hydrated: boolean;
+};
+
+let currentParksState: ParksState = {
+  parks: PARKS,
+  selected: null,
+  hydrated: false,
+};
+
+const parkListeners = new Set<() => void>();
+
+function notifyParks() {
+  for (const listener of parkListeners) {
+    listener();
+  }
+}
+
+function updateParksState(updater: (prev: ParksState) => ParksState) {
+  currentParksState = updater(currentParksState);
+  notifyParks();
+}
+
+if (typeof window !== "undefined") {
+  currentParksState = {
+    parks: readParks(),
+    selected: readSelected(),
+    hydrated: true,
+  };
+}
+
+export function useParks() {
+  const subscribe = useCallback((listener: () => void) => {
+    parkListeners.add(listener);
+    return () => {
+      parkListeners.delete(listener);
+    };
   }, []);
 
+  const getSnapshot = useCallback(() => currentParksState, []);
+  const getServerSnapshot = useCallback(
+    () => ({
+      parks: PARKS,
+      selected: null,
+      hydrated: false,
+    }),
+    [],
+  );
+
+  const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+
+  useEffect(() => {
+    if (!state.hydrated) {
+      updateParksState((prev) => ({
+        ...prev,
+        parks: readParks(),
+        selected: readSelected(),
+        hydrated: true,
+      }));
+    }
+  }, [state.hydrated]);
+
   const persist = useCallback((list: Park[]) => {
-    setParks(list);
-    window.localStorage.setItem(PARKS_KEY, JSON.stringify(list));
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(PARKS_KEY, JSON.stringify(list));
+    }
+    updateParksState((prev) => ({
+      ...prev,
+      parks: list,
+    }));
   }, []);
 
   const select = useCallback((id: string | null) => {
-    setSelected(id);
-    if (id) window.localStorage.setItem(SELECTED_KEY, id);
-    else window.localStorage.removeItem(SELECTED_KEY);
+    if (typeof window !== "undefined") {
+      if (id) window.localStorage.setItem(SELECTED_KEY, id);
+      else window.localStorage.removeItem(SELECTED_KEY);
+    }
+    updateParksState((prev) => ({
+      ...prev,
+      selected: id,
+    }));
   }, []);
 
   const addPark = useCallback(
@@ -54,7 +122,8 @@ export function useParks() {
       const id = slugify(trimmed) || `park-${Date.now()}`;
       const list = readParks();
       if (list.some((park) => park.id === id)) return id;
-      persist([...list, { id, name: trimmed }]);
+      const updated = [...list, { id, name: trimmed }];
+      persist(updated);
       return id;
     },
     [persist],
@@ -63,10 +132,11 @@ export function useParks() {
   const removePark = useCallback(
     (id: string) => {
       const list = readParks().filter((park) => park.id !== id);
-      persist(list.length ? list : PARKS);
-      if (selected === id) select(null);
+      const updated = list.length ? list : PARKS;
+      persist(updated);
+      if (state.selected === id) select(null);
     },
-    [persist, select, selected],
+    [persist, select, state.selected],
   );
 
   const renamePark = useCallback(
@@ -82,9 +152,18 @@ export function useParks() {
   );
 
   const nameFor = useCallback(
-    (id: string) => parks.find((park) => park.id === id)?.name ?? id,
-    [parks],
+    (id: string) => state.parks.find((park) => park.id === id)?.name ?? id,
+    [state.parks],
   );
 
-  return { parks, selected, hydrated, select, addPark, removePark, renamePark, nameFor };
+  return {
+    parks: state.parks,
+    selected: state.selected,
+    hydrated: state.hydrated,
+    select,
+    addPark,
+    removePark,
+    renamePark,
+    nameFor,
+  };
 }
