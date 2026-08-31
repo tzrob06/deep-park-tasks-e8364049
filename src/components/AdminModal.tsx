@@ -16,9 +16,11 @@ import { useParks } from "@/lib/park-store";
 import {
   Building2,
   Check,
+  FolderPlus,
   KeyRound,
   Lock,
   LogOut,
+  Palette,
   Plus,
   RotateCcw,
   Save,
@@ -28,6 +30,8 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useTheme, type ThemeId } from "@/lib/theme-store";
+import { cn } from "@/lib/utils";
 
 export function AdminModal({
   trigger,
@@ -36,122 +40,124 @@ export function AdminModal({
   onOpenChange,
 }: {
   trigger?: React.ReactNode;
-  defaultTab?: "parks" | "titles" | "security";
+  defaultTab?: "parks" | "titles" | "theme" | "security";
   isOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
 }) {
   const admin = useAdmin();
   const parks = useParks();
+  const themeObj = useTheme();
 
   const [internalOpen, setInternalOpen] = useState(false);
   const open = isOpen !== undefined ? isOpen : internalOpen;
   const setOpen = onOpenChange !== undefined ? onOpenChange : setInternalOpen;
 
   // Login form state
-  const [passwordInput, setPasswordInput] = useState("");
+  const [passcode, setPasscode] = useState("");
   const [loginError, setLoginError] = useState(false);
 
-  // Site titles state
+  // New Park form state
+  const [newParkName, setNewParkName] = useState("");
+  const [newParkSubtitle, setNewParkSubtitle] = useState("");
+
+  // Titles form state
   const [siteTitle, setSiteTitle] = useState(admin.config.siteTitle);
   const [districtTitle, setDistrictTitle] = useState(admin.config.districtTitle);
-  const [weeklyTitle, setWeeklyTitle] = useState(
-    admin.config.categoryTitles["weekly"] ?? "Weekly Tasks",
-  );
-  const [monthlyTitle, setMonthlyTitle] = useState(
-    admin.config.categoryTitles["monthly"] ?? "Monthly Tasks",
-  );
-  const [seasonalTitle, setSeasonalTitle] = useState(
-    admin.config.categoryTitles["seasonal"] ?? "Seasonal Tasks",
-  );
+  const [weeklyTitle, setWeeklyTitle] = useState(admin.config.categoryTitles.weekly ?? "Weekly Tasks");
+  const [monthlyTitle, setMonthlyTitle] = useState(admin.config.categoryTitles.monthly ?? "Monthly Tasks");
+  const [seasonalTitle, setSeasonalTitle] = useState(admin.config.categoryTitles.seasonal ?? "Seasonal Tasks");
 
-  // Password change state
+  // Security form state
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // New park state
-  const [newParkName, setNewParkName] = useState("");
-  const [newParkTag, setNewParkTag] = useState("");
-
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (admin.login(passwordInput)) {
+    if (admin.unlock(passcode)) {
       setLoginError(false);
-      setPasswordInput("");
-      toast.success("Boss / Admin access unlocked!");
+      setPasscode("");
+      toast.success("Boss Mode unlocked");
     } else {
       setLoginError(true);
-      toast.error("Incorrect password. Please try again.");
+      toast.error("Incorrect passcode");
     }
-  };
-
-  const handleSaveTitles = (e: React.FormEvent) => {
-    e.preventDefault();
-    admin.updateSiteTitle(siteTitle, undefined, districtTitle);
-    admin.updateCategoryTitle("weekly", weeklyTitle);
-    admin.updateCategoryTitle("monthly", monthlyTitle);
-    admin.updateCategoryTitle("seasonal", seasonalTitle);
-    toast.success("Site titles and categories saved!");
-  };
-
-  const handleChangePassword = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newPassword.trim().length < 4) {
-      toast.error("Password must be at least 4 characters long.");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      toast.error("Passwords do not match.");
-      return;
-    }
-    admin.changePassword(newPassword);
-    setNewPassword("");
-    setConfirmPassword("");
-    toast.success("Admin password successfully updated!");
   };
 
   const handleAddPark = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newParkName.trim()) return;
-    const id = parks.addPark(newParkName.trim());
-    if (id && newParkTag.trim()) {
-      admin.updateParkMetadata(id, {
-        subtitle: "A Connecticut State Park",
-        tag: newParkTag.trim(),
-      });
+    const park = parks.addPark(newParkName.trim());
+    if (newParkSubtitle.trim()) {
+      admin.setParkMetadata(park.id, { subtitle: newParkSubtitle.trim() });
     }
     setNewParkName("");
-    setNewParkTag("");
-    toast.success(`Park "${newParkName.trim()}" added!`);
+    setNewParkSubtitle("");
+    toast.success(`Park "${park.name}" added`);
+  };
+
+  const handleSaveTitles = (e: React.FormEvent) => {
+    e.preventDefault();
+    admin.setSiteTitle(siteTitle);
+    admin.setDistrictTitle(districtTitle);
+    admin.setCategoryTitle("weekly", weeklyTitle);
+    admin.setCategoryTitle("monthly", monthlyTitle);
+    admin.setCategoryTitle("seasonal", seasonalTitle);
+    toast.success("Titles updated successfully");
+  };
+
+  const handleChangePassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 4) {
+      toast.error("Passcode must be at least 4 characters");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Passcodes do not match");
+      return;
+    }
+    admin.changePassword(newPassword);
+    setNewPassword("");
+    setConfirmPassword("");
+    toast.success("Boss passcode changed successfully");
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
+      <DialogTrigger asChild>
+        {trigger ?? (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+          >
+            {admin.isAdmin ? (
+              <>
+                <ShieldCheck className="size-3.5 text-primary" />
+                <span className="font-semibold text-primary">Boss Mode</span>
+              </>
+            ) : (
+              <>
+                <Lock className="size-3.5" />
+                <span>Admin</span>
+              </>
+            )}
+          </Button>
+        )}
+      </DialogTrigger>
+
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center justify-between gap-3 pr-6">
-            <div className="flex items-center gap-2.5">
-              <span
-                className={`flex size-9 items-center justify-center rounded-lg ${
-                  admin.isAdmin
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {admin.isAdmin ? (
-                  <ShieldCheck className="size-5" />
-                ) : (
-                  <KeyRound className="size-5" />
-                )}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <ShieldCheck className="size-4" />
               </span>
               <div>
                 <DialogTitle className="font-display text-xl uppercase tracking-wide">
-                  {admin.isAdmin ? "Supervisor / Boss Control Panel" : "Boss Admin Access"}
+                  Boss Control Panel
                 </DialogTitle>
-                <DialogDescription className="text-xs">
-                  {admin.isAdmin
-                    ? "Edit park names, category titles, site branding, and security settings."
-                    : "Enter your supervisor passcode to unlock site editing privileges."}
+                <DialogDescription className="text-xs text-muted-foreground">
+                  Manage park sites, customize titles, and configure maintenance settings.
                 </DialogDescription>
               </div>
             </div>
@@ -159,13 +165,13 @@ export function AdminModal({
               <Button
                 variant="outline"
                 size="sm"
-                className="text-xs text-muted-foreground hover:text-destructive shrink-0"
+                className="h-8 text-xs text-destructive hover:bg-destructive/10 gap-1.5"
                 onClick={() => {
-                  admin.logout();
-                  toast.info("Logged out of Admin mode");
+                  admin.lock();
+                  toast.info("Logged out of Boss Mode");
                 }}
               >
-                <LogOut className="size-3.5" /> Exit Boss Mode
+                <LogOut className="size-3" /> Exit Boss Mode
               </Button>
             )}
           </div>
@@ -173,51 +179,66 @@ export function AdminModal({
 
         {!admin.isAdmin ? (
           /* Login Form */
-          <form onSubmit={handleLogin} className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="admin-password">Supervisor Password</Label>
-              <div className="relative">
+          <form onSubmit={handleLogin} className="mt-4 space-y-4">
+            <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                <KeyRound className="size-4 text-primary" />
+                <span>Enter Boss Passcode</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                This area is restricted to supervisors and maintenance directors.
+              </p>
+              <div className="space-y-2">
+                <Label htmlFor="admin-passcode" className="text-xs">
+                  Passcode
+                </Label>
                 <Input
-                  id="admin-password"
+                  id="admin-passcode"
                   type="password"
-                  value={passwordInput}
+                  value={passcode}
                   onChange={(e) => {
-                    setPasswordInput(e.target.value);
-                    setLoginError(false);
+                    setPasscode(e.target.value);
+                    if (loginError) setLoginError(false);
                   }}
-                  placeholder="Enter boss password..."
-                  className="pr-10 h-10"
+                  placeholder="Enter passcode..."
+                  className={cn(
+                    "h-10",
+                    loginError && "border-destructive focus-visible:ring-destructive",
+                  )}
                   autoFocus
                 />
-                <Lock className="absolute right-3 top-2.5 size-4.5 text-muted-foreground pointer-events-none" />
+                {loginError && (
+                  <p className="text-xs text-destructive font-medium flex items-center gap-1">
+                    <ShieldAlert className="size-3.5" /> Incorrect passcode. Please try again.
+                  </p>
+                )}
               </div>
-              {loginError && (
-                <p className="text-xs text-destructive flex items-center gap-1 mt-1">
-                  <ShieldAlert className="size-3.5" /> Incorrect passcode. Please try again.
-                </p>
-              )}
             </div>
-            <div className="flex justify-end gap-2 pt-2">
+
+            <div className="flex justify-end gap-2">
               <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit">
-                <KeyRound className="size-4" /> Unlock Admin
+              <Button type="submit" disabled={!passcode.trim()}>
+                <KeyRound className="size-4" /> Unlock
               </Button>
             </div>
           </form>
         ) : (
           /* Admin Tabs */
           <Tabs defaultValue={defaultTab} className="mt-2 space-y-4">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="parks" className="flex items-center gap-1.5 text-xs sm:text-sm">
                 <Building2 className="size-3.5" /> Parks
               </TabsTrigger>
               <TabsTrigger value="titles" className="flex items-center gap-1.5 text-xs sm:text-sm">
-                <Tag className="size-3.5" /> Names & Titles
+                <Tag className="size-3.5" /> Titles
+              </TabsTrigger>
+              <TabsTrigger value="theme" className="flex items-center gap-1.5 text-xs sm:text-sm">
+                <Palette className="size-3.5" /> Theme
               </TabsTrigger>
               <TabsTrigger value="security" className="flex items-center gap-1.5 text-xs sm:text-sm">
-                <Lock className="size-3.5" /> Password
+                <Lock className="size-3.5" /> Passcode
               </TabsTrigger>
             </TabsList>
 
@@ -239,57 +260,68 @@ export function AdminModal({
 
                     return (
                       <div key={park.id} className="pt-3 first:pt-0 space-y-2">
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 space-y-1">
-                            <Label className="text-[11px] text-muted-foreground font-medium">
-                              Park Name
-                            </Label>
-                            <Input
-                              defaultValue={park.name}
-                              onBlur={(e) => {
-                                if (e.target.value.trim() && e.target.value !== park.name) {
-                                  parks.renamePark(park.id, e.target.value.trim());
-                                  toast.success(`Renamed to "${e.target.value.trim()}"`);
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-sm">{park.name}</span>
+                            <span className="text-[11px] font-mono text-muted-foreground">
+                              ({park.id})
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-7 text-destructive hover:bg-destructive/10"
+                              onClick={() => {
+                                if (
+                                  confirm(
+                                    `Are you sure you want to remove ${park.name}? This cannot be undone.`,
+                                  )
+                                ) {
+                                  parks.removePark(park.id);
+                                  toast.success(`Removed "${park.name}"`);
                                 }
                               }}
-                              className="h-9 font-medium"
-                            />
+                              disabled={parks.parks.length <= 1}
+                              title="Delete Park"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </Button>
                           </div>
+                        </div>
 
-                          <div className="flex-1 space-y-1">
-                            <Label className="text-[11px] text-muted-foreground font-medium">
-                              Town / Location Tag
+                        {/* Park Editable Subtitle */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                          <div>
+                            <Label htmlFor={`sub-${park.id}`} className="text-[11px] text-muted-foreground">
+                              Subtitle / Region
                             </Label>
                             <Input
-                              defaultValue={meta.tag ?? ""}
+                              id={`sub-${park.id}`}
+                              defaultValue={meta.subtitle}
                               placeholder="e.g. Southbury / Oxford, CT"
+                              className="h-8 text-xs mt-1"
                               onBlur={(e) => {
-                                admin.updateParkMetadata(park.id, {
-                                  subtitle: meta.subtitle || "A Connecticut State Park",
-                                  tag: e.target.value.trim(),
-                                });
-                                toast.success(`Updated location tag for ${park.name}`);
+                                admin.setParkMetadata(park.id, { subtitle: e.target.value });
+                                toast.success(`Updated subtitle for ${park.name}`);
                               }}
-                              className="h-9"
                             />
                           </div>
-
-                          {parks.parks.length > 1 && (
-                            <div className="pt-5">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                title={`Delete ${park.name}`}
-                                className="size-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                onClick={() => {
-                                  parks.removePark(park.id);
-                                  toast.success(`Removed park "${park.name}"`);
-                                }}
-                              >
-                                <Trash2 className="size-4" />
-                              </Button>
-                            </div>
-                          )}
+                          <div>
+                            <Label htmlFor={`tag-${park.id}`} className="text-[11px] text-muted-foreground">
+                              Badge Tag
+                            </Label>
+                            <Input
+                              id={`tag-${park.id}`}
+                              defaultValue={meta.tag ?? ""}
+                              placeholder="e.g. Headquarters"
+                              className="h-8 text-xs mt-1"
+                              onBlur={(e) => {
+                                admin.setParkMetadata(park.id, { tag: e.target.value });
+                                toast.success(`Updated tag for ${park.name}`);
+                              }}
+                            />
+                          </div>
                         </div>
                       </div>
                     );
@@ -297,33 +329,44 @@ export function AdminModal({
                 </div>
               </div>
 
-              {/* Add New Park Form */}
+              {/* Add New Park Section */}
               <form
                 onSubmit={handleAddPark}
-                className="mt-4 rounded-xl border border-dashed border-border p-3.5 bg-muted/30 space-y-3"
+                className="mt-4 rounded-xl border border-dashed border-border bg-muted/20 p-4 space-y-3"
               >
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <Plus className="size-3.5" /> Add New Park Site
-                </h4>
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <FolderPlus className="size-3.5 text-primary" />
+                  <span>Add New Park Site</span>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <Input
-                    value={newParkName}
-                    onChange={(e) => setNewParkName(e.target.value)}
-                    placeholder="New park name..."
-                    className="h-9"
-                  />
-                  <Input
-                    value={newParkTag}
-                    onChange={(e) => setNewParkTag(e.target.value)}
-                    placeholder="Location / Town (optional)..."
-                    className="h-9"
-                  />
+                  <div className="space-y-1">
+                    <Label htmlFor="new-park-name" className="text-xs">
+                      Park Name *
+                    </Label>
+                    <Input
+                      id="new-park-name"
+                      value={newParkName}
+                      onChange={(e) => setNewParkName(e.target.value)}
+                      placeholder="e.g. Kettletown State Park"
+                      className="h-9"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="new-park-sub" className="text-xs">
+                      Subtitle / Location
+                    </Label>
+                    <Input
+                      id="new-park-sub"
+                      value={newParkSubtitle}
+                      onChange={(e) => setNewParkSubtitle(e.target.value)}
+                      placeholder="e.g. Southbury, CT"
+                      className="h-9"
+                    />
+                  </div>
                 </div>
-                <div className="flex justify-end">
-                  <Button type="submit" size="sm" disabled={!newParkName.trim()}>
-                    <Plus className="size-3.5" /> Add Park Site
-                  </Button>
-                </div>
+                <Button type="submit" size="sm" disabled={!newParkName.trim()} className="w-full">
+                  <Plus className="size-3.5" /> Add Park
+                </Button>
               </form>
             </TabsContent>
 
@@ -332,29 +375,27 @@ export function AdminModal({
               <form onSubmit={handleSaveTitles} className="space-y-4">
                 <div className="space-y-3 rounded-xl border border-border p-4 bg-muted/20">
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Header & Branding Titles
+                    Header & District Branding
                   </h3>
                   <div className="space-y-2">
                     <Label htmlFor="site-title" className="text-xs">
-                      Main Website Title
+                      Site Title
                     </Label>
                     <Input
                       id="site-title"
                       value={siteTitle}
                       onChange={(e) => setSiteTitle(e.target.value)}
-                      placeholder="e.g. DEEP Park Maintenance"
                       className="h-9"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="district-title" className="text-xs">
-                      District & Agency Footer
+                      District Subtitle / Footer
                     </Label>
                     <Input
                       id="district-title"
                       value={districtTitle}
                       onChange={(e) => setDistrictTitle(e.target.value)}
-                      placeholder="e.g. Connecticut DEEP · Western District Parks Maintenance"
                       className="h-9"
                     />
                   </div>
@@ -362,41 +403,38 @@ export function AdminModal({
 
                 <div className="space-y-3 rounded-xl border border-border p-4 bg-muted/20">
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Task Category Section Names
+                    Task Category Section Titles
                   </h3>
                   <div className="space-y-2">
                     <Label htmlFor="cat-weekly" className="text-xs">
-                      Category 1 Name (Weekly)
+                      Weekly Category Title
                     </Label>
                     <Input
                       id="cat-weekly"
                       value={weeklyTitle}
                       onChange={(e) => setWeeklyTitle(e.target.value)}
-                      placeholder="Weekly Tasks"
                       className="h-9"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="cat-monthly" className="text-xs">
-                      Category 2 Name (Monthly)
+                      Monthly Category Title
                     </Label>
                     <Input
                       id="cat-monthly"
                       value={monthlyTitle}
                       onChange={(e) => setMonthlyTitle(e.target.value)}
-                      placeholder="Monthly Tasks"
                       className="h-9"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="cat-seasonal" className="text-xs">
-                      Category 3 Name (Seasonal)
+                      Seasonal Category Title
                     </Label>
                     <Input
                       id="cat-seasonal"
                       value={seasonalTitle}
                       onChange={(e) => setSeasonalTitle(e.target.value)}
-                      placeholder="Seasonal Tasks"
                       className="h-9"
                     />
                   </div>
@@ -410,7 +448,72 @@ export function AdminModal({
               </form>
             </TabsContent>
 
-            {/* TAB 3: PASSWORD & SECURITY */}
+            {/* TAB: THEME & VISUAL STYLING */}
+            <TabsContent value="theme" className="space-y-4 pt-1">
+              <div className="space-y-3 rounded-xl border border-border p-4 bg-muted/20">
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Website Color Theme
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground">
+                    Select your preferred palette. Changes apply immediately across all devices.
+                  </p>
+                </div>
+
+                <div className="grid gap-2.5">
+                  {themeObj.themes.map((t) => {
+                    const isSelected = t.id === themeObj.theme;
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => {
+                          themeObj.setTheme(t.id as ThemeId);
+                          toast.success(`Theme switched to "${t.name}"`);
+                        }}
+                        className={cn(
+                          "flex items-center justify-between rounded-xl border p-3 text-left transition-all cursor-pointer",
+                          isSelected
+                            ? "border-primary bg-primary/10 font-semibold ring-1 ring-primary shadow-xs"
+                            : "border-border bg-card hover:bg-muted/50 hover:border-border/80",
+                        )}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="flex items-center -space-x-1.5 shrink-0">
+                            <span
+                              className="size-5 rounded-full border border-black/20 shadow-2xs"
+                              style={{ backgroundColor: t.swatches.primary }}
+                            />
+                            <span
+                              className="size-5 rounded-full border border-black/20 shadow-2xs"
+                              style={{ backgroundColor: t.swatches.accent }}
+                            />
+                            <span
+                              className="size-5 rounded-full border border-black/20 shadow-2xs"
+                              style={{ backgroundColor: t.swatches.bg }}
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-semibold truncate">{t.name}</span>
+                              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                {t.badge}
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground font-normal mt-0.5">
+                              {t.description}
+                            </p>
+                          </div>
+                        </div>
+                        {isSelected && <Check className="size-5 text-primary shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* TAB: PASSWORD & SECURITY */}
             <TabsContent value="security" className="space-y-4 pt-1">
               <form onSubmit={handleChangePassword} className="space-y-4">
                 <div className="space-y-3 rounded-xl border border-border p-4 bg-muted/20">

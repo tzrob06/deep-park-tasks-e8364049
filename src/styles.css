@@ -2,20 +2,14 @@
 @source "../src";
 @import "tw-animate-css";
 
-
-
 /*
- * Design system definition.
- *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
- *
- * The :root and .dark blocks define the actual color values using oklch.
- * All colors MUST use oklch format.
- *
- * To add a new semantic color:
- * 1. Add the variable to :root (light value) and .dark (dark value)
- * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ * DEEP Park Maintenance Design System
+ * Supports 5 interactive sample themes:
+ * 1. pine (Classic Pine & Topo)
+ * 2. field (High-Vis Field Crew)
+ * 3. dark (Deep Forest Night)
+ * 4. coastal (Sound & River Blue)
+ * 5. autumn (New England Autumn)
  */
 
 @theme inline {
@@ -68,7 +62,9 @@
   --shadow-panel: 0 1px 2px oklch(0.25 0.04 150 / 0.06), 0 8px 24px oklch(0.25 0.04 150 / 0.08);
 }
 
-:root {
+/* THEME 1: CLASSIC PINE & TOPO (Default) */
+:root,
+[data-theme="pine"] {
   --radius: 0.5rem;
   --background: oklch(0.977 0.011 95);
   --foreground: oklch(0.245 0.031 150);
@@ -108,9 +104,106 @@
   --sidebar-ring: oklch(0.41 0.088 152);
 }
 
+/* THEME 2: HIGH-VISIBILITY FIELD CREW (High Contrast Amber & Steel) */
+[data-theme="field"] {
+  --radius: 0.5rem;
+  --background: oklch(0.965 0.01 240);
+  --foreground: oklch(0.18 0.03 260);
+  --card: oklch(1.0 0 0);
+  --card-foreground: oklch(0.18 0.03 260);
+  --popover: oklch(1.0 0 0);
+  --popover-foreground: oklch(0.18 0.03 260);
+  --primary: oklch(0.62 0.18 68);
+  --primary-foreground: oklch(0.12 0.03 60);
+  --secondary: oklch(0.91 0.02 240);
+  --secondary-foreground: oklch(0.18 0.04 260);
+  --muted: oklch(0.92 0.015 240);
+  --muted-foreground: oklch(0.45 0.03 250);
+  --accent: oklch(0.88 0.05 75);
+  --accent-foreground: oklch(0.2 0.05 70);
+  --destructive: oklch(0.55 0.22 27);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.82 0.02 240);
+  --input: oklch(0.82 0.02 240);
+  --ring: oklch(0.62 0.18 68);
+}
+
+/* THEME 3: DEEP FOREST NIGHT (Sleek Dark Mode) */
+[data-theme="dark"] {
+  --radius: 0.5rem;
+  --background: oklch(0.17 0.02 160);
+  --foreground: oklch(0.96 0.01 150);
+  --card: oklch(0.22 0.025 160);
+  --card-foreground: oklch(0.96 0.01 150);
+  --popover: oklch(0.22 0.025 160);
+  --popover-foreground: oklch(0.96 0.01 150);
+  --primary: oklch(0.68 0.18 155);
+  --primary-foreground: oklch(0.12 0.02 160);
+  --secondary: oklch(0.28 0.03 160);
+  --secondary-foreground: oklch(0.92 0.02 150);
+  --muted: oklch(0.25 0.02 160);
+  --muted-foreground: oklch(0.68 0.02 150);
+  --accent: oklch(0.32 0.04 155);
+  --accent-foreground: oklch(0.96 0.01 150);
+  --destructive: oklch(0.58 0.2 27);
+  --destructive-foreground: oklch(0.98 0.01 95);
+  --border: oklch(0.30 0.025 160);
+  --input: oklch(0.26 0.025 160);
+  --ring: oklch(0.68 0.18 155);
+}
+
+/* THEME 4: SOUND & RIVER BLUE (Coastal & Maritime) */
+[data-theme="coastal"] {
+  --radius: 0.5rem;
+  --background: oklch(0.975 0.012 215);
+  --foreground: oklch(0.20 0.05 250);
+  --card: oklch(0.998 0.004 215);
+  --card-foreground: oklch(0.20 0.05 250);
+  --popover: oklch(0.998 0.004 215);
+  --popover-foreground: oklch(0.20 0.05 250);
+  --primary: oklch(0.44 0.14 245);
+  --primary-foreground: oklch(0.99 0.005 245);
+  --secondary: oklch(0.92 0.03 200);
+  --secondary-foreground: oklch(0.22 0.06 240);
+  --muted: oklch(0.94 0.018 215);
+  --muted-foreground: oklch(0.46 0.035 235);
+  --accent: oklch(0.89 0.055 200);
+  --accent-foreground: oklch(0.20 0.06 240);
+  --destructive: oklch(0.52 0.18 27);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.87 0.025 220);
+  --input: oklch(0.87 0.025 220);
+  --ring: oklch(0.44 0.14 245);
+}
+
+/* THEME 5: NEW ENGLAND AUTUMN (Warm Heritage) */
+[data-theme="autumn"] {
+  --radius: 0.5rem;
+  --background: oklch(0.975 0.015 75);
+  --foreground: oklch(0.25 0.045 40);
+  --card: oklch(0.998 0.006 75);
+  --card-foreground: oklch(0.25 0.045 40);
+  --popover: oklch(0.998 0.006 75);
+  --popover-foreground: oklch(0.25 0.045 40);
+  --primary: oklch(0.50 0.17 38);
+  --primary-foreground: oklch(0.99 0.008 75);
+  --secondary: oklch(0.92 0.04 75);
+  --secondary-foreground: oklch(0.28 0.06 42);
+  --muted: oklch(0.94 0.02 75);
+  --muted-foreground: oklch(0.48 0.035 45);
+  --accent: oklch(0.88 0.07 72);
+  --accent-foreground: oklch(0.25 0.06 42);
+  --destructive: oklch(0.52 0.18 27);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.87 0.03 65);
+  --input: oklch(0.87 0.03 65);
+  --ring: oklch(0.50 0.17 38);
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
   }
 
   body {
@@ -127,6 +220,6 @@
 
 @utility topo-bg {
   background-image:
-    radial-gradient(circle at 20% 15%, oklch(0.41 0.088 152 / 0.07), transparent 45%),
-    radial-gradient(circle at 85% 0%, oklch(0.78 0.147 74 / 0.12), transparent 40%);
+    radial-gradient(circle at 20% 15%, var(--primary) / 0.08, transparent 45%),
+    radial-gradient(circle at 85% 0%, var(--accent) / 0.12, transparent 40%);
 }
