@@ -1,6 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
-import { CheckCircle2, ChevronLeft, ChevronRight, Edit3, KeyRound, Lock, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { CheckCircle2, ChevronLeft, ChevronRight, Edit3, Eye, KeyRound, Lock, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { z } from "zod";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ParkPicker } from "@/components/ParkPicker";
 import { AdminModal } from "@/components/AdminModal";
@@ -32,7 +33,12 @@ const PRIORITY_STYLES: Record<Priority, { dot: string; label: string }> = {
 const PRIORITY_OPTIONS: Priority[] = ["high", "medium", "low"];
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+const searchSchema = z.object({
+  view: z.string().optional(),
+});
+
 export const Route = createFileRoute("/")({
+  validateSearch: (search) => searchSchema.parse(search),
   head: () => ({
     meta: [
       { title: "DEEP Park Maintenance Task Board" },
@@ -54,6 +60,8 @@ export const Route = createFileRoute("/")({
 });
 
 function ParkGate() {
+  const search = Route.useSearch();
+  const isReadOnly = search.view === "readonly";
   const parks = useParks();
 
   if (!parks.hydrated) return <div className="min-h-screen topo-bg" />;
@@ -67,6 +75,7 @@ function ParkGate() {
       key={parks.selected}
       parkId={parks.selected}
       parkLabel={parks.nameFor(parks.selected)}
+      isReadOnly={isReadOnly}
       onSwitchPark={() => parks.select(null)}
     />
   );
@@ -79,10 +88,12 @@ function startOfMonth(date: Date) {
 function TaskBoard({
   parkId,
   parkLabel,
+  isReadOnly = false,
   onSwitchPark,
 }: {
   parkId: string;
   parkLabel: string;
+  isReadOnly?: boolean;
   onSwitchPark: () => void;
 }) {
   const store = useTaskStore(parkId);
@@ -99,6 +110,10 @@ function TaskBoard({
   const [crewWarning, setCrewWarning] = useState(false);
 
   const handleToggleTask = (task: string, isCurrentlyDone: boolean) => {
+    if (isReadOnly) {
+      toast.info("Viewing in Read-Only mode. Task changes are disabled.");
+      return;
+    }
     if (!isCurrentlyDone && !store.state.crew.trim()) {
       setCrewWarning(true);
       crewInputRef.current?.focus();
@@ -122,9 +137,28 @@ function TaskBoard({
 
   return (
     <div className="min-h-screen topo-bg">
-      <SiteHeader parkLabel={parkLabel} onSwitchPark={onSwitchPark} />
+      <SiteHeader parkLabel={parkLabel} onSwitchPark={onSwitchPark} isReadOnly={isReadOnly} />
 
       <main className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
+        {/* Read-Only Mode Notification Banner */}
+        {isReadOnly && (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 text-xs text-amber-900 dark:text-amber-200 shadow-panel">
+            <div className="flex items-center gap-2 font-medium">
+              <Eye className="size-4 text-amber-600 dark:text-amber-400 shrink-0" />
+              <span>
+                <strong>Read-Only Spectator View:</strong> You are viewing live park maintenance tasks and shift notes in view-only mode.
+              </span>
+            </div>
+            <Link
+              to="/"
+              search={{}}
+              className="inline-flex items-center gap-1 rounded-md bg-background px-2.5 py-1 text-xs font-semibold text-foreground border border-border shadow-2xs hover:bg-muted transition-colors"
+            >
+              Switch to Crew Mode
+            </Link>
+          </div>
+        )}
+
         {/* Unified Top Toolbar */}
         <section className="rounded-xl border border-border bg-card px-5 py-4 shadow-panel">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -135,7 +169,7 @@ function TaskBoard({
               <span className="inline-flex items-center rounded-md bg-secondary px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-secondary-foreground">
                 {parkLabel}
               </span>
-              {admin.isAdmin && (
+              {!isReadOnly && admin.isAdmin && (
                 <AdminModal
                   defaultTab="parks"
                   trigger={
@@ -146,31 +180,38 @@ function TaskBoard({
                 />
               )}
             </div>
-            <div className="flex items-center gap-2 sm:max-w-xs w-full">
-              <label
-                htmlFor="crew"
-                className="shrink-0 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-              >
-                Crew on shift <span className="text-destructive font-bold" title="Required to complete tasks">*</span>:
-              </label>
-              <Input
-                ref={crewInputRef}
-                id="crew"
-                value={store.state.crew}
-                onChange={(event) => {
-                  store.setCrew(event.target.value);
-                  if (crewWarning && event.target.value.trim()) {
-                    setCrewWarning(false);
-                  }
-                }}
-                placeholder="Name / Initials (required)"
-                title="Your name or initials are required to complete tasks"
-                className={cn(
-                  "h-9 w-full transition-all",
-                  crewWarning && !store.state.crew.trim() && "border-destructive ring-2 ring-destructive/40 bg-destructive/5",
-                )}
-              />
-            </div>
+            {isReadOnly ? (
+              <div className="flex items-center gap-2 rounded-lg border border-border/80 bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground">
+                <Eye className="size-3.5 text-muted-foreground/80 shrink-0" />
+                <span>Read-Only Viewer</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 sm:max-w-xs w-full">
+                <label
+                  htmlFor="crew"
+                  className="shrink-0 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                >
+                  Crew on shift <span className="text-destructive font-bold" title="Required to complete tasks">*</span>:
+                </label>
+                <Input
+                  ref={crewInputRef}
+                  id="crew"
+                  value={store.state.crew}
+                  onChange={(event) => {
+                    store.setCrew(event.target.value);
+                    if (crewWarning && event.target.value.trim()) {
+                      setCrewWarning(false);
+                    }
+                  }}
+                  placeholder="Name / Initials (required)"
+                  title="Your name or initials are required to complete tasks"
+                  className={cn(
+                    "h-9 w-full transition-all",
+                    crewWarning && !store.state.crew.trim() && "border-destructive ring-2 ring-destructive/40 bg-destructive/5",
+                  )}
+                />
+              </div>
+            )}
           </div>
         </section>
 
@@ -281,14 +322,16 @@ function TaskBoard({
                     })}
                   </p>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => store.clearDay(selectedDate)}
-                  disabled={stats.done === 0}
-                >
-                  <RotateCcw className="size-3.5" /> Uncheck all
-                </Button>
+                {!isReadOnly && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => store.clearDay(selectedDate)}
+                    disabled={stats.done === 0}
+                  >
+                    <RotateCcw className="size-3.5" /> Uncheck all
+                  </Button>
+                )}
               </div>
 
               <div className="mt-4">
@@ -323,16 +366,22 @@ function TaskBoard({
                       <Checkbox
                         id={key}
                         checked={Boolean(done)}
-                        onCheckedChange={() => handleToggleTask(task, Boolean(done))}
-                        className="size-5 shrink-0"
+                        disabled={isReadOnly}
+                        onCheckedChange={() => !isReadOnly && handleToggleTask(task, Boolean(done))}
+                        className={cn("size-5 shrink-0", isReadOnly && "opacity-80")}
                       />
                       <label
                         htmlFor={key}
                         onClick={(e) => {
                           e.preventDefault();
-                          handleToggleTask(task, Boolean(done));
+                          if (!isReadOnly) {
+                            handleToggleTask(task, Boolean(done));
+                          }
                         }}
-                        className="flex min-w-0 flex-1 cursor-pointer flex-col justify-center select-none"
+                        className={cn(
+                          "flex min-w-0 flex-1 flex-col justify-center select-none",
+                          isReadOnly ? "cursor-default" : "cursor-pointer",
+                        )}
                       >
                         <span
                           className={cn(
@@ -363,7 +412,7 @@ function TaskBoard({
                         <span className={cn("size-2 rounded-full", pStyle.dot)} />
                         <span className="hidden xs:inline">{pStyle.label}</span>
                       </span>
-                      {admin.isAdmin && (
+                      {!isReadOnly && admin.isAdmin && (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -385,7 +434,12 @@ function TaskBoard({
                 ) : null}
               </ul>
 
-              {admin.isAdmin ? (
+              {isReadOnly ? (
+                <div className="mt-6 flex items-center justify-center gap-2 rounded-lg border border-dashed border-border/80 bg-muted/20 px-4 py-3 text-xs text-muted-foreground text-center">
+                  <Lock className="size-3.5 text-muted-foreground/80" />
+                  <span>Task additions and completions are disabled in Read-Only view.</span>
+                </div>
+              ) : admin.isAdmin ? (
                 <form
                   className="mt-6 flex flex-col gap-2.5 sm:flex-row border-t border-border/70 pt-5"
                   onSubmit={(event) => {
@@ -446,7 +500,8 @@ function TaskBoard({
             <CrewNotesSection
               selectedDate={selectedDate}
               crewName={store.state.crew}
-              isAdmin={admin.isAdmin}
+              isAdmin={admin.isAdmin && !isReadOnly}
+              isReadOnly={isReadOnly}
               notes={store.notesForDay(selectedDate)}
               onAddNote={store.addNote}
               onDeleteNote={store.deleteNote}

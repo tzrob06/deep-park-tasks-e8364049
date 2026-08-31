@@ -28,6 +28,7 @@ export function CrewNotesSection({
   selectedDate,
   crewName,
   isAdmin,
+  isReadOnly = false,
   notes,
   onAddNote,
   onDeleteNote,
@@ -37,6 +38,7 @@ export function CrewNotesSection({
   selectedDate: string;
   crewName: string;
   isAdmin: boolean;
+  isReadOnly?: boolean;
   notes: {
     pinned: CrewNote[];
     daySpecific: CrewNote[];
@@ -176,9 +178,11 @@ export function CrewNotesSection({
         {notes.daySpecific.length === 0 && notes.pinned.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border py-8 text-center text-xs text-muted-foreground space-y-1">
             <p>No shift notes or maintenance reports for {formattedDate}.</p>
-            <p className="text-[11px] text-muted-foreground/70">
-              Leave passdown notes, equipment alerts, or field photos below.
-            </p>
+            {!isReadOnly && (
+              <p className="text-[11px] text-muted-foreground/70">
+                Leave passdown notes, equipment alerts, or field photos below.
+              </p>
+            )}
           </div>
         ) : null}
 
@@ -186,7 +190,7 @@ export function CrewNotesSection({
           <NoteCard
             key={note.id}
             note={note}
-            isAdmin={isAdmin}
+            isAdmin={isAdmin && !isReadOnly}
             onDelete={onDeleteNote}
             onTogglePin={onTogglePin}
             onViewPhoto={setLightboxPhoto}
@@ -194,81 +198,88 @@ export function CrewNotesSection({
         ))}
       </div>
 
-      {/* 3. ADD NOTE FORM */}
-      <form onSubmit={handleSubmit} className="border-t border-border/70 pt-4 space-y-3">
-        <div>
-          <Input
-            value={noteText}
-            onChange={(e) => setNoteText(e.target.value)}
-            placeholder="Leave a shift note, equipment update, or repair notice..."
-            className="h-10 text-sm"
-          />
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="hidden"
-            onChange={handlePhotoSelect}
-          />
-        </div>
+      {/* 3. ADD NOTE FORM (Hidden in Read-Only Mode) */}
+      {!isReadOnly ? (
+        <form onSubmit={handleSubmit} className="border-t border-border/70 pt-4 space-y-3">
+          <div>
+            <Input
+              value={noteText}
+              onChange={(e) => setNoteText(e.target.value)}
+              placeholder="Leave a shift note, equipment update, or repair notice..."
+              className="h-10 text-sm"
+            />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={handlePhotoSelect}
+            />
+          </div>
 
-        {/* Attached Photo Preview */}
-        {attachedPhoto && (
-          <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 p-2 text-xs">
-            <div className="relative size-12 shrink-0 overflow-hidden rounded-md border border-border bg-black">
-              <img
-                src={attachedPhoto}
-                alt="Attached preview"
-                className="size-full object-cover"
-              />
+          {/* Attached Photo Preview */}
+          {attachedPhoto && (
+            <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 p-2 text-xs">
+              <div className="relative size-12 shrink-0 overflow-hidden rounded-md border border-border bg-black">
+                <img
+                  src={attachedPhoto}
+                  alt="Attached preview"
+                  className="size-full object-cover"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-foreground truncate">
+                  {attachedPhotoName || "Field photo attached"}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  Will be included in note & saved to Boss Photo Log
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-7 text-muted-foreground hover:text-destructive shrink-0"
+                onClick={handleClearAttachedPhoto}
+              >
+                <X className="size-4" />
+              </Button>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-foreground truncate">
-                {attachedPhotoName || "Field photo attached"}
-              </p>
-              <p className="text-[11px] text-muted-foreground">
-                Will be included in note & saved to Boss Photo Log
-              </p>
-            </div>
+          )}
+
+          {isCompressing && (
+            <p className="text-xs text-primary animate-pulse">Processing photo...</p>
+          )}
+
+          {/* Bottom controls: Add Photo & Submit */}
+          <div className="flex items-center justify-end gap-2 pt-1">
             <Button
               type="button"
-              variant="ghost"
-              size="icon"
-              className="size-7 text-muted-foreground hover:text-destructive shrink-0"
-              onClick={handleClearAttachedPhoto}
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 text-xs"
+              onClick={() => fileInputRef.current?.click()}
             >
-              <X className="size-4" />
+              <ImageIcon className="size-3.5" />
+              {attachedPhoto ? "Change Photo" : "Add Photo"}
+            </Button>
+            <Button
+              type="submit"
+              size="sm"
+              className="h-8 gap-1 text-xs"
+              disabled={(!noteText.trim() && !attachedPhoto) || isCompressing}
+            >
+              <Plus className="size-3.5" /> Post Note
             </Button>
           </div>
-        )}
-
-        {isCompressing && (
-          <p className="text-xs text-primary animate-pulse">Processing photo...</p>
-        )}
-
-        {/* Bottom controls: Add Photo & Submit */}
-        <div className="flex items-center justify-end gap-2 pt-1">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-8 gap-1.5 text-xs"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <ImageIcon className="size-3.5" />
-            {attachedPhoto ? "Change Photo" : "Add Photo"}
-          </Button>
-          <Button
-            type="submit"
-            size="sm"
-            className="h-8 gap-1 text-xs"
-            disabled={(!noteText.trim() && !attachedPhoto) || isCompressing}
-          >
-            <Plus className="size-3.5" /> Post Note
-          </Button>
+        </form>
+      ) : (
+        <div className="border-t border-border/70 pt-3 text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5">
+          <AlertCircle className="size-3.5" />
+          <span>Note creation is disabled in Read-Only view.</span>
         </div>
-      </form>
+      )}
 
       {/* Lightbox Dialog */}
       <Dialog
