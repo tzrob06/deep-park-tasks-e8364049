@@ -4,12 +4,7 @@
 
 /*
  * DEEP Park Maintenance Design System
- * Supports 5 interactive sample themes:
- * 1. pine (Classic Pine & Topo)
- * 2. field (High-Vis Field Crew)
- * 3. dark (Deep Forest Night)
- * 4. coastal (Sound & River Blue)
- * 5. autumn (New England Autumn)
+ * Default Theme: Deep Forest Night (with subtle covered bridge photo background)
  */
 
 @theme inline {
@@ -59,16 +54,57 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --shadow-panel: 0 1px 2px oklch(0.25 0.04 150 / 0.06), 0 8px 24px oklch(0.25 0.04 150 / 0.08);
+  --shadow-panel: 0 4px 20px -2px oklch(0 0 0 / 0.35), 0 0 0 1px oklch(1 0 0 / 0.06);
 }
 
-/* THEME 1: CLASSIC PINE & TOPO (Default) */
+/* THEME: DEEP FOREST NIGHT (Default) */
 :root,
+[data-theme="dark"] {
+  --radius: 0.5rem;
+  --background: oklch(0.16 0.022 165);
+  --foreground: oklch(0.96 0.01 150);
+  --card: oklch(0.205 0.026 165 / 0.92);
+  --card-foreground: oklch(0.96 0.01 150);
+  --popover: oklch(0.205 0.026 165);
+  --popover-foreground: oklch(0.96 0.01 150);
+  --primary: oklch(0.68 0.18 155);
+  --primary-foreground: oklch(0.12 0.02 160);
+  --secondary: oklch(0.27 0.032 165);
+  --secondary-foreground: oklch(0.92 0.02 150);
+  --muted: oklch(0.24 0.022 165);
+  --muted-foreground: oklch(0.68 0.02 150);
+  --accent: oklch(0.32 0.04 155);
+  --accent-foreground: oklch(0.96 0.01 150);
+  --destructive: oklch(0.58 0.2 27);
+  --destructive-foreground: oklch(0.98 0.01 95);
+  --border: oklch(0.30 0.025 165);
+  --input: oklch(0.26 0.025 165);
+  --ring: oklch(0.68 0.18 155);
+  --bark: oklch(0.38 0.052 62);
+  --bark-foreground: oklch(0.97 0.012 95);
+  --sun: oklch(0.78 0.147 74);
+  --sun-foreground: oklch(0.26 0.04 60);
+  --chart-1: oklch(0.68 0.18 155);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.78 0.147 74);
+  --chart-4: oklch(0.38 0.052 62);
+  --chart-5: oklch(0.55 0.1 130);
+  --sidebar: oklch(0.18 0.022 165);
+  --sidebar-foreground: oklch(0.96 0.01 150);
+  --sidebar-primary: oklch(0.68 0.18 155);
+  --sidebar-primary-foreground: oklch(0.12 0.02 160);
+  --sidebar-accent: oklch(0.27 0.032 165);
+  --sidebar-accent-foreground: oklch(0.92 0.02 150);
+  --sidebar-border: oklch(0.30 0.025 165);
+  --sidebar-ring: oklch(0.68 0.18 155);
+}
+
+/* THEME 2: CLASSIC PINE & TOPO */
 [data-theme="pine"] {
   --radius: 0.5rem;
   --background: oklch(0.977 0.011 95);
   --foreground: oklch(0.245 0.031 150);
-  --card: oklch(0.995 0.005 95);
+  --card: oklch(0.995 0.005 95 / 0.95);
   --card-foreground: oklch(0.245 0.031 150);
   --popover: oklch(0.995 0.005 95);
   --popover-foreground: oklch(0.245 0.031 150);
@@ -85,31 +121,14 @@
   --border: oklch(0.884 0.021 110);
   --input: oklch(0.884 0.021 110);
   --ring: oklch(0.41 0.088 152);
-  --bark: oklch(0.38 0.052 62);
-  --bark-foreground: oklch(0.97 0.012 95);
-  --sun: oklch(0.78 0.147 74);
-  --sun-foreground: oklch(0.26 0.04 60);
-  --chart-1: oklch(0.41 0.088 152);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.78 0.147 74);
-  --chart-4: oklch(0.38 0.052 62);
-  --chart-5: oklch(0.55 0.1 130);
-  --sidebar: oklch(0.955 0.015 100);
-  --sidebar-foreground: oklch(0.245 0.031 150);
-  --sidebar-primary: oklch(0.41 0.088 152);
-  --sidebar-primary-foreground: oklch(0.98 0.012 95);
-  --sidebar-accent: oklch(0.9 0.052 130);
-  --sidebar-accent-foreground: oklch(0.3 0.05 150);
-  --sidebar-border: oklch(0.884 0.021 110);
-  --sidebar-ring: oklch(0.41 0.088 152);
 }
 
-/* THEME 2: HIGH-VISIBILITY FIELD CREW (High Contrast Amber & Steel) */
+/* THEME 3: HIGH-VISIBILITY FIELD CREW */
 [data-theme="field"] {
   --radius: 0.5rem;
   --background: oklch(0.965 0.01 240);
   --foreground: oklch(0.18 0.03 260);
-  --card: oklch(1.0 0 0);
+  --card: oklch(1.0 0 0 / 0.96);
   --card-foreground: oklch(0.18 0.03 260);
   --popover: oklch(1.0 0 0);
   --popover-foreground: oklch(0.18 0.03 260);
@@ -128,36 +147,12 @@
   --ring: oklch(0.62 0.18 68);
 }
 
-/* THEME 3: DEEP FOREST NIGHT (Sleek Dark Mode) */
-[data-theme="dark"] {
-  --radius: 0.5rem;
-  --background: oklch(0.17 0.02 160);
-  --foreground: oklch(0.96 0.01 150);
-  --card: oklch(0.22 0.025 160);
-  --card-foreground: oklch(0.96 0.01 150);
-  --popover: oklch(0.22 0.025 160);
-  --popover-foreground: oklch(0.96 0.01 150);
-  --primary: oklch(0.68 0.18 155);
-  --primary-foreground: oklch(0.12 0.02 160);
-  --secondary: oklch(0.28 0.03 160);
-  --secondary-foreground: oklch(0.92 0.02 150);
-  --muted: oklch(0.25 0.02 160);
-  --muted-foreground: oklch(0.68 0.02 150);
-  --accent: oklch(0.32 0.04 155);
-  --accent-foreground: oklch(0.96 0.01 150);
-  --destructive: oklch(0.58 0.2 27);
-  --destructive-foreground: oklch(0.98 0.01 95);
-  --border: oklch(0.30 0.025 160);
-  --input: oklch(0.26 0.025 160);
-  --ring: oklch(0.68 0.18 155);
-}
-
-/* THEME 4: SOUND & RIVER BLUE (Coastal & Maritime) */
+/* THEME 4: SOUND & RIVER BLUE */
 [data-theme="coastal"] {
   --radius: 0.5rem;
   --background: oklch(0.975 0.012 215);
   --foreground: oklch(0.20 0.05 250);
-  --card: oklch(0.998 0.004 215);
+  --card: oklch(0.998 0.004 215 / 0.95);
   --card-foreground: oklch(0.20 0.05 250);
   --popover: oklch(0.998 0.004 215);
   --popover-foreground: oklch(0.20 0.05 250);
@@ -176,12 +171,12 @@
   --ring: oklch(0.44 0.14 245);
 }
 
-/* THEME 5: NEW ENGLAND AUTUMN (Warm Heritage) */
+/* THEME 5: NEW ENGLAND AUTUMN */
 [data-theme="autumn"] {
   --radius: 0.5rem;
   --background: oklch(0.975 0.015 75);
   --foreground: oklch(0.25 0.045 40);
-  --card: oklch(0.998 0.006 75);
+  --card: oklch(0.998 0.006 75 / 0.95);
   --card-foreground: oklch(0.25 0.045 40);
   --popover: oklch(0.998 0.006 75);
   --popover-foreground: oklch(0.25 0.045 40);
@@ -219,7 +214,25 @@
 }
 
 @utility topo-bg {
+  position: relative;
+  isolation: isolate;
+  background-color: var(--color-background);
   background-image:
-    radial-gradient(circle at 20% 15%, var(--primary) / 0.08, transparent 45%),
-    radial-gradient(circle at 85% 0%, var(--accent) / 0.12, transparent 40%);
+    linear-gradient(to bottom, var(--background) 0%, transparent 12%, transparent 88%, var(--background) 100%),
+    radial-gradient(circle at 20% 15%, var(--primary) / 0.10, transparent 45%),
+    radial-gradient(circle at 85% 10%, var(--accent) / 0.08, transparent 40%);
+}
+
+.topo-bg::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: url("/park-bg.jpg");
+  background-position: center 35%;
+  background-size: cover;
+  background-repeat: no-repeat;
+  opacity: 0.14;
+  filter: contrast(115%) saturate(85%);
+  pointer-events: none;
 }

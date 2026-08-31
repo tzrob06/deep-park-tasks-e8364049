@@ -16,9 +16,20 @@ export type ThemeInfo = {
 
 export const THEMES: ThemeInfo[] = [
   {
+    id: "dark",
+    name: "Deep Forest Night",
+    badge: "Default",
+    description: "Charcoal moss background, glowing emerald green & anti-glare cards",
+    swatches: {
+      primary: "#10b981",
+      bg: "#131f1c",
+      accent: "#34d399",
+    },
+  },
+  {
     id: "pine",
     name: "Classic Pine & Topo",
-    badge: "Default",
+    badge: "Natural",
     description: "Deep evergreen pine, warm stone background & subtle trail accents",
     swatches: {
       primary: "#225c38",
@@ -35,17 +46,6 @@ export const THEMES: ThemeInfo[] = [
       primary: "#d97706",
       bg: "#f1f5f9",
       accent: "#ea580c",
-    },
-  },
-  {
-    id: "dark",
-    name: "Deep Forest Night",
-    badge: "Dark Mode",
-    description: "Charcoal moss background, glowing emerald green & anti-glare cards",
-    swatches: {
-      primary: "#10b981",
-      bg: "#131f1c",
-      accent: "#34d399",
     },
   },
   {
@@ -72,8 +72,8 @@ export const THEMES: ThemeInfo[] = [
   },
 ];
 
-const THEME_STORAGE_KEY = "deep-theme-v1";
-const DEFAULT_THEME: ThemeId = "pine";
+const THEME_STORAGE_KEY = "deep-theme-v2";
+const DEFAULT_THEME: ThemeId = "dark";
 
 let currentTheme: ThemeId = DEFAULT_THEME;
 const themeListeners = new Set<() => void>();
