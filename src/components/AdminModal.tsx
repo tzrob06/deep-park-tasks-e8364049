@@ -165,7 +165,8 @@ export function AdminModal({
                 className="text-xs text-muted-foreground hover:text-destructive shrink-0"
                 onClick={() => {
                   admin.logout();
-                  toast.info("Logged out of Admin mode");
+                  setOpen(false);
+                  toast.info("Logged out of Boss Mode");
                 }}
               >
                 <LogOut className="size-3.5" /> Exit Boss Mode
