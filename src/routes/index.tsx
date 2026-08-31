@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { CheckCircle2, ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
+import { CheckCircle2, ChevronLeft, ChevronRight, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ParkPicker } from "@/components/ParkPicker";
 import {
@@ -119,6 +119,10 @@ function TaskBoard({
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div>
               <h1 className="text-3xl font-semibold uppercase tracking-wide">Task Board</h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {parkLabel} &middot; every task shows on the day you schedule it &middot; pick its
+                priority when you add it
+              </p>
             </div>
             <div className="w-full max-w-xs">
               <label
