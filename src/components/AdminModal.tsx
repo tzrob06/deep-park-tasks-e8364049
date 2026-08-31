@@ -191,13 +191,9 @@ export function AdminModal({
                 />
                 <Lock className="absolute right-3 top-2.5 size-4.5 text-muted-foreground pointer-events-none" />
               </div>
-              {loginError ? (
+              {loginError && (
                 <p className="text-xs text-destructive flex items-center gap-1 mt-1">
                   <ShieldAlert className="size-3.5" /> Incorrect passcode. Please try again.
-                </p>
-              ) : (
-                <p className="text-[11px] text-muted-foreground">
-                  Default passcode: <code className="bg-muted px-1.5 py-0.5 rounded font-mono">deepadmin</code> (can be changed inside).
                 </p>
               )}
             </div>

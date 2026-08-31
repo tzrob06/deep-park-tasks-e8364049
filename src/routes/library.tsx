@@ -104,20 +104,22 @@ export function LibraryBoard({
                   : `${total} tasks for ${parkLabel}. Edit the text of any task, delete what you don’t do, add your own, or drop a task straight onto today’s list.`}
               </p>
             </div>
-            <Button
-              variant="outline"
-              onClick={() => {
-                store.resetLibrary();
-                toast.success(
-                  parkId === "southford"
-                    ? "Library restored to original task list"
-                    : "Task library cleared",
-                );
-              }}
-            >
-              <RotateCcw className="size-3.5" />
-              {parkId === "southford" ? "Restore original list" : "Clear task list"}
-            </Button>
+            {admin.isAdmin && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  store.resetLibrary();
+                  toast.success(
+                    parkId === "southford"
+                      ? "Library restored to original task list"
+                      : "Task library cleared",
+                  );
+                }}
+              >
+                <RotateCcw className="size-3.5" />
+                {parkId === "southford" ? "Restore original list" : "Clear task list"}
+              </Button>
+            )}
           </div>
         </section>
 
@@ -130,6 +132,7 @@ export function LibraryBoard({
                 categoryId={category.id}
                 name={categoryDisplayName}
                 tasks={store.libraryFor(category.id)}
+                isAdmin={admin.isAdmin}
                 onRename={(task, next) => store.renameLibraryTask(category.id, task, next)}
                 onRemove={(task) => store.removeLibraryTask(category.id, task)}
                 onAdd={(task, priority) => store.addLibraryTask(category.id, task, priority)}
@@ -155,6 +158,7 @@ function CategoryCard({
   categoryId,
   name,
   tasks,
+  isAdmin,
   onRename,
   onRemove,
   onAdd,
@@ -163,6 +167,7 @@ function CategoryCard({
   categoryId: string;
   name: string;
   tasks: string[];
+  isAdmin: boolean;
   onRename: (task: string, next: string) => void;
   onRemove: (task: string) => void;
   onAdd: (task: string, priority: Priority) => void;
@@ -181,29 +186,37 @@ function CategoryCard({
       <ul className="mt-3 divide-y divide-border/70">
         {tasks.map((task) => (
           <li key={`${categoryId}-${task}`} className="flex items-center gap-1 py-1.5">
-            <Input
-              defaultValue={task}
-              onBlur={(event) => onRename(task, event.target.value)}
-              className="h-9 flex-1 border-transparent bg-transparent px-2 capitalize shadow-none focus-visible:border-input focus-visible:bg-background"
-            />
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={`Add ${task} to today`}
-              title="Add to today"
-              onClick={() => onScheduleToday(task)}
-            >
-              <CalendarPlus />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={`Delete ${task}`}
-              className="text-muted-foreground hover:text-destructive"
-              onClick={() => onRemove(task)}
-            >
-              <Trash2 />
-            </Button>
+            {isAdmin ? (
+              <>
+                <Input
+                  defaultValue={task}
+                  onBlur={(event) => onRename(task, event.target.value)}
+                  className="h-9 flex-1 border-transparent bg-transparent px-2 capitalize shadow-none focus-visible:border-input focus-visible:bg-background"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Add ${task} to today`}
+                  title="Add to today"
+                  onClick={() => onScheduleToday(task)}
+                >
+                  <CalendarPlus className="size-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Delete ${task}`}
+                  className="text-muted-foreground hover:text-destructive"
+                  onClick={() => onRemove(task)}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </>
+            ) : (
+              <span className="flex-1 px-2 py-1.5 text-sm font-medium leading-snug">
+                {task}
+              </span>
+            )}
           </li>
         ))}
         {tasks.length === 0 ? (
@@ -213,35 +226,37 @@ function CategoryCard({
         ) : null}
       </ul>
 
-      <form
-        className="mt-4 flex flex-wrap gap-2 border-t border-border pt-4"
-        onSubmit={(event) => {
-          event.preventDefault();
-          onAdd(draft, priority);
-          setDraft("");
-          setPriority(DEFAULT_PRIORITY);
-        }}
-      >
-        <Input
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          placeholder="Add a task"
-          className="min-w-32 flex-1"
-        />
-        <Select value={priority} onValueChange={(value) => setPriority(value as Priority)}>
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="Priority" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="high">High</SelectItem>
-            <SelectItem value="medium">Medium</SelectItem>
-            <SelectItem value="low">Low</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button type="submit" disabled={!draft.trim()}>
-          <Plus /> Add
-        </Button>
-      </form>
+      {isAdmin && (
+        <form
+          className="mt-4 flex flex-wrap gap-2 border-t border-border pt-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onAdd(draft, priority);
+            setDraft("");
+            setPriority(DEFAULT_PRIORITY);
+          }}
+        >
+          <Input
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            placeholder="Add a task"
+            className="min-w-32 flex-1"
+          />
+          <Select value={priority} onValueChange={(value) => setPriority(value as Priority)}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Priority" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="high">High</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="low">Low</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button type="submit" disabled={!draft.trim()}>
+            <Plus /> Add
+          </Button>
+        </form>
+      )}
     </section>
   );
 }

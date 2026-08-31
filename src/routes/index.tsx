@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { CheckCircle2, ChevronLeft, ChevronRight, Edit3, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { CheckCircle2, ChevronLeft, ChevronRight, Edit3, KeyRound, Lock, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ParkPicker } from "@/components/ParkPicker";
 import { AdminModal } from "@/components/AdminModal";
@@ -341,72 +341,91 @@ function TaskBoard({
                       <span className={cn("size-2 rounded-full", pStyle.dot)} />
                       <span className="hidden xs:inline">{pStyle.label}</span>
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`Remove ${task}`}
-                      className="size-8 shrink-0 text-muted-foreground opacity-60 transition-opacity hover:opacity-100 hover:text-destructive"
-                      onClick={() => store.unscheduleTask(selectedDate, task)}
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
+                    {admin.isAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Remove ${task}`}
+                        className="size-8 shrink-0 text-muted-foreground opacity-60 transition-opacity hover:opacity-100 hover:text-destructive"
+                        onClick={() => store.unscheduleTask(selectedDate, task)}
+                        title="Remove task (Boss Mode)"
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    )}
                   </li>
                 );
               })}
               {tasks.length === 0 ? (
                 <li className="rounded-lg border border-dashed border-border py-12 text-center text-sm text-muted-foreground">
-                  Nothing scheduled for this day — pick from the library or add a task below.
+                  Nothing scheduled for this day.
                 </li>
               ) : null}
             </ul>
 
-            <form
-              className="mt-6 flex flex-col gap-2.5 sm:flex-row border-t border-border/70 pt-5"
-              onSubmit={(event) => {
-                event.preventDefault();
-                store.scheduleTask(selectedDate, newTask, newPriority);
-                setNewTask("");
-                setNewPriority(DEFAULT_PRIORITY);
-              }}
-            >
-              <Input
-                value={newTask}
-                onChange={(event) => setNewTask(event.target.value)}
-                placeholder="Add a task to this day..."
-                list="task-library"
-                className="h-10 min-w-0 flex-1"
-              />
-              <datalist id="task-library">
-                {Object.values(store.state.library)
-                  .flat()
-                  .map((task) => (
-                    <option key={task} value={task} />
-                  ))}
-              </datalist>
-              <div className="flex gap-2 shrink-0">
-                <Select
-                  value={newPriority}
-                  onValueChange={(value) => setNewPriority(value as Priority)}
-                >
-                  <SelectTrigger className="h-10 w-32 shrink-0">
-                    <SelectValue placeholder="Priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PRIORITY_OPTIONS.map((option) => (
-                      <SelectItem key={option} value={option}>
-                        <span className="flex items-center gap-2">
-                          <span className={cn("size-2 rounded-full", PRIORITY_STYLES[option].dot)} />
-                          {PRIORITY_STYLES[option].label}
-                        </span>
-                      </SelectItem>
+            {admin.isAdmin ? (
+              <form
+                className="mt-6 flex flex-col gap-2.5 sm:flex-row border-t border-border/70 pt-5"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  store.scheduleTask(selectedDate, newTask, newPriority);
+                  setNewTask("");
+                  setNewPriority(DEFAULT_PRIORITY);
+                }}
+              >
+                <Input
+                  value={newTask}
+                  onChange={(event) => setNewTask(event.target.value)}
+                  placeholder="Add a task to this day..."
+                  list="task-library"
+                  className="h-10 min-w-0 flex-1"
+                />
+                <datalist id="task-library">
+                  {Object.values(store.state.library)
+                    .flat()
+                    .map((task) => (
+                      <option key={task} value={task} />
                     ))}
-                  </SelectContent>
-                </Select>
-                <Button type="submit" className="h-10 shrink-0" disabled={!newTask.trim()}>
-                  <Plus className="size-4" /> Add
-                </Button>
+                </datalist>
+                <div className="flex gap-2 shrink-0">
+                  <Select
+                    value={newPriority}
+                    onValueChange={(value) => setNewPriority(value as Priority)}
+                  >
+                    <SelectTrigger className="h-10 w-32 shrink-0">
+                      <SelectValue placeholder="Priority" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PRIORITY_OPTIONS.map((option) => (
+                        <SelectItem key={option} value={option}>
+                          <span className="flex items-center gap-2">
+                            <span className={cn("size-2 rounded-full", PRIORITY_STYLES[option].dot)} />
+                            {PRIORITY_STYLES[option].label}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button type="submit" className="h-10 shrink-0" disabled={!newTask.trim()}>
+                    <Plus className="size-4" /> Add
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed border-border/80 bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
+                <p className="flex items-center gap-1.5 font-medium">
+                  <Lock className="size-3.5 text-muted-foreground/80" />
+                  Adding and removing daily tasks is restricted to supervisors.
+                </p>
+                <AdminModal
+                  trigger={
+                    <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5 font-medium">
+                      <KeyRound className="size-3" /> Unlock Boss Mode
+                    </Button>
+                  }
+                />
               </div>
-            </form>
+            )}
           </section>
         </div>
       </main>
