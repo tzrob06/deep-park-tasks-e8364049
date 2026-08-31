@@ -79,7 +79,8 @@ export function AdminModal({
     if (admin.login(passwordInput)) {
       setLoginError(false);
       setPasswordInput("");
-      toast.success("Boss / Admin access unlocked!");
+      setOpen(false);
+      toast.success("Boss Mode unlocked!");
     } else {
       setLoginError(true);
       toast.error("Incorrect password. Please try again.");
@@ -250,7 +251,7 @@ export function AdminModal({
                               defaultValue={park.name}
                               onBlur={(e) => {
                                 if (e.target.value.trim() && e.target.value !== park.name) {
-                                   parks.renamePark(park.id, e.target.value.trim());
+                                  parks.renamePark(park.id, e.target.value.trim());
                                   toast.success(`Renamed to "${e.target.value.trim()}"`);
                                 }
                               }}
