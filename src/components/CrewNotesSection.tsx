@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -57,7 +56,6 @@ export function CrewNotesSection({
   onRequireCrewFocus: () => void;
 }) {
   const [noteText, setNoteText] = useState("");
-  const [isPinned, setIsPinned] = useState(false);
   const [attachedPhoto, setAttachedPhoto] = useState<string | null>(null);
   const [attachedPhotoName, setAttachedPhotoName] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
@@ -110,16 +108,14 @@ export function CrewNotesSection({
     }
 
     const created = onAddNote(selectedDate, noteText, {
-      isPinned: isAdmin ? isPinned : false,
       photo: attachedPhoto ?? undefined,
       photoName: attachedPhotoName ?? undefined,
     });
 
     if (created) {
       setNoteText("");
-      setIsPinned(false);
       handleClearAttachedPhoto();
-      toast.success(isPinned ? "Pinned park notice posted!" : "Shift note posted!");
+      toast.success("Shift note posted!");
     }
   };
 
@@ -251,44 +247,26 @@ export function CrewNotesSection({
           <p className="text-xs text-primary animate-pulse">Processing photo...</p>
         )}
 
-        {/* Bottom controls: Pin Checkbox (Boss only) & Submit */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-          {isAdmin ? (
-            <label className="flex items-center gap-2 cursor-pointer text-xs text-muted-foreground hover:text-foreground select-none">
-              <Checkbox
-                checked={isPinned}
-                onCheckedChange={(checked) => setIsPinned(Boolean(checked))}
-                className="size-4"
-              />
-              <span className="flex items-center gap-1">
-                <Pin className="size-3.5 text-amber-500" />
-                Pin note to park (visible on all shifts)
-              </span>
-            </label>
-          ) : (
-            <div />
-          )}
-
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-8 gap-1.5 text-xs"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <ImageIcon className="size-3.5" />
-              {attachedPhoto ? "Change Photo" : "Add Photo"}
-            </Button>
-            <Button
-              type="submit"
-              size="sm"
-              className="h-8 gap-1 text-xs"
-              disabled={(!noteText.trim() && !attachedPhoto) || isCompressing}
-            >
-              <Plus className="size-3.5" /> Post Note
-            </Button>
-          </div>
+        {/* Bottom controls: Add Photo & Submit */}
+        <div className="flex items-center justify-end gap-2 pt-1">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 text-xs"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <ImageIcon className="size-3.5" />
+            {attachedPhoto ? "Change Photo" : "Add Photo"}
+          </Button>
+          <Button
+            type="submit"
+            size="sm"
+            className="h-8 gap-1 text-xs"
+            disabled={(!noteText.trim() && !attachedPhoto) || isCompressing}
+          >
+            <Plus className="size-3.5" /> Post Note
+          </Button>
         </div>
       </form>
 
