@@ -8,6 +8,17 @@ export type Priority = "low" | "medium" | "high";
 export const PRIORITY_ORDER: Record<Priority, number> = { high: 0, medium: 1, low: 2 };
 export const DEFAULT_PRIORITY: Priority = "medium";
 
+export type CrewNote = {
+  id: string;
+  date: string; // YYYY-MM-DD
+  text: string;
+  by: string; // Crew member name
+  at: string; // ISO timestamp
+  isPinned?: boolean | undefined; // Pinned note visible across all dates for this park
+  photo?: string | undefined; // Base64 image data URL
+  photoName?: string | undefined;
+};
+
 export type StoreState = {
   /** Master task list, grouped by category. Fully editable on the Task Library page. */
   library: Record<string, string[]>;
@@ -17,6 +28,8 @@ export type StoreState = {
   completed: Record<string, Completion>;
   /** Priority per task label. */
   priorities: Record<string, Priority>;
+  /** Shift notes & passdown log for this park */
+  notes: CrewNote[];
   crew: string;
 };
 
@@ -32,6 +45,7 @@ const EMPTY: StoreState = {
   schedule: {},
   completed: {},
   priorities: {},
+  notes: [],
   crew: "",
 };
 
@@ -53,6 +67,7 @@ function read(parkId: string): StoreState {
         ...EMPTY,
         ...parsed,
         library,
+        notes: Array.isArray(parsed.notes) ? parsed.notes : [],
       };
     }
 
@@ -66,17 +81,17 @@ function read(parkId: string): StoreState {
           ...EMPTY,
           ...parsed,
           library,
+          notes: Array.isArray(parsed.notes) ? parsed.notes : [],
         };
       }
-      return { ...EMPTY, library: defaultLibrary("southford") };
+      return { ...EMPTY, library: defaultLibrary("southford"), notes: [] };
     }
 
     // For all non-Southford parks (including Putnam), start with a clean empty library
-    // and wipe any legacy v2 key that might contain Southford tasks
     window.localStorage.removeItem(`deep-maintenance-state-v2::${parkId}`);
-    return { ...EMPTY, library: defaultLibrary(parkId) };
+    return { ...EMPTY, library: defaultLibrary(parkId), notes: [] };
   } catch {
-    return { ...EMPTY, library: fallbackLibrary };
+    return { ...EMPTY, library: fallbackLibrary, notes: [] };
   }
 }
 
@@ -159,6 +174,80 @@ export function useTaskStore(parkId: string) {
   );
 
   const setCrew = useCallback((crew: string) => setState((prev) => ({ ...prev, crew })), []);
+
+  // --- Crew Shift Notes & Photo Log ----------------------------------------
+
+  const addNote = useCallback(
+    (
+      date: string,
+      text: string,
+      options?: {
+        isPinned?: boolean | undefined;
+        photo?: string | undefined;
+        photoName?: string | undefined;
+      },
+    ) => {
+      const noteText = text.trim();
+      const crewName = state.crew.trim();
+      if (!noteText && !options?.photo) return null;
+      if (!crewName) return null;
+
+      const newNote: CrewNote = {
+        id: `note-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        date,
+        text: noteText,
+        by: crewName,
+        at: new Date().toISOString(),
+        isPinned: Boolean(options?.isPinned),
+        photo: options?.photo,
+        photoName: options?.photoName,
+      };
+
+      setState((prev) => ({
+        ...prev,
+        notes: [newNote, ...(prev.notes ?? [])],
+      }));
+
+      return newNote;
+    },
+    [state.crew],
+  );
+
+  const deleteNote = useCallback((id: string) => {
+    setState((prev) => ({
+      ...prev,
+      notes: (prev.notes ?? []).filter((note) => note.id !== id),
+    }));
+  }, []);
+
+  const togglePinNote = useCallback((id: string) => {
+    setState((prev) => ({
+      ...prev,
+      notes: (prev.notes ?? []).map((note) =>
+        note.id === id ? { ...note, isPinned: !note.isPinned } : note,
+      ),
+    }));
+  }, []);
+
+  const notesForDay = useCallback(
+    (date: string) => {
+      const allNotes = state.notes ?? [];
+      const pinned = allNotes.filter((n) => n.isPinned);
+      const daySpecific = allNotes.filter((n) => n.date === date && !n.isPinned);
+      return {
+        pinned,
+        daySpecific,
+        allForDay: [...pinned, ...daySpecific],
+      };
+    },
+    [state.notes],
+  );
+
+  const allPhotos = useCallback(() => {
+    return (state.notes ?? [])
+      .filter((n) => Boolean(n.photo))
+      .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+  }, [state.notes]);
 
   // --- Library editing -----------------------------------------------------
 
@@ -252,6 +341,11 @@ export function useTaskStore(parkId: string) {
     setPriority,
     priorityOf,
     setCrew,
+    addNote,
+    deleteNote,
+    togglePinNote,
+    notesForDay,
+    allPhotos,
     libraryFor,
     addLibraryTask,
     removeLibraryTask,

@@ -4,6 +4,7 @@ import { CheckCircle2, ChevronLeft, ChevronRight, Edit3, KeyRound, Lock, Plus, R
 import { SiteHeader } from "@/components/SiteHeader";
 import { ParkPicker } from "@/components/ParkPicker";
 import { AdminModal } from "@/components/AdminModal";
+import { CrewNotesSection } from "@/components/CrewNotesSection";
 import { useAdmin } from "@/lib/admin-store";
 import {
   useTaskStore,
@@ -261,183 +262,201 @@ function TaskBoard({
             </section>
           </aside>
 
-          {/* Right Main Task List */}
-          <section className="rounded-xl border border-border bg-card p-5 sm:p-6 shadow-panel">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 pb-4">
-              <div>
-                <h2 className="font-display text-2xl sm:text-3xl font-semibold uppercase tracking-wide">
-                  {selectedDate === today
-                    ? "Today"
-                    : selected.toLocaleDateString(undefined, { weekday: "long" })}
-                </h2>
-                <p className="text-xs sm:text-sm text-muted-foreground">
-                  {selected.toLocaleDateString(undefined, {
-                    weekday: "long",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => store.clearDay(selectedDate)}
-                disabled={stats.done === 0}
-              >
-                <RotateCcw className="size-3.5" /> Uncheck all
-              </Button>
-            </div>
-
-            <div className="mt-4">
-              <div className="flex items-center justify-between text-xs sm:text-sm">
-                <span className="font-semibold text-muted-foreground uppercase tracking-wider text-[11px]">
-                  Daily Progress
-                </span>
-                <span className="tabular-nums font-medium text-foreground">
-                  {stats.done} of {stats.total} complete
-                </span>
-              </div>
-              <Progress
-                value={stats.total ? (stats.done / stats.total) * 100 : 0}
-                className="mt-2 h-2"
-              />
-            </div>
-
-            <ul className="mt-5 space-y-1.5">
-              {tasks.map((task) => {
-                const key = completionKey(selectedDate, task);
-                const done = store.state.completed[key];
-                const priority = store.priorityOf(task);
-                const pStyle = PRIORITY_STYLES[priority];
-                return (
-                  <li
-                    key={key}
-                    className={cn(
-                      "group flex items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 transition-colors",
-                      done ? "bg-muted/40 text-muted-foreground" : "hover:bg-muted/50 hover:border-border/50",
-                    )}
-                  >
-                    <Checkbox
-                      id={key}
-                      checked={Boolean(done)}
-                      onCheckedChange={() => handleToggleTask(task, Boolean(done))}
-                      className="size-5 shrink-0"
-                    />
-                    <label
-                      htmlFor={key}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleToggleTask(task, Boolean(done));
-                      }}
-                      className="flex min-w-0 flex-1 cursor-pointer flex-col justify-center select-none"
-                    >
-                      <span
-                        className={cn(
-                          "text-sm font-medium leading-snug break-words",
-                          done && "line-through decoration-primary/60 opacity-80",
-                        )}
-                      >
-                        {task}
-                      </span>
-                      {done ? (
-                        <span className="mt-0.5 flex items-center gap-1 text-[11px] text-primary">
-                          <CheckCircle2 className="size-3 shrink-0" />
-                          <span className="font-semibold">{done.by}</span>
-                          {" · "}
-                          {new Date(done.at).toLocaleString(undefined, {
-                            month: "short",
-                            day: "numeric",
-                            hour: "numeric",
-                            minute: "2-digit",
-                          })}
-                        </span>
-                      ) : null}
-                    </label>
-                    <span
-                      className="flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-border bg-background px-2.5 text-[11px] font-medium text-muted-foreground shadow-2xs"
-                      title={`Priority: ${pStyle.label}`}
-                    >
-                      <span className={cn("size-2 rounded-full", pStyle.dot)} />
-                      <span className="hidden xs:inline">{pStyle.label}</span>
-                    </span>
-                    {admin.isAdmin && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Remove ${task}`}
-                        className="size-8 shrink-0 text-muted-foreground opacity-60 transition-opacity hover:opacity-100 hover:text-destructive"
-                        onClick={() => store.unscheduleTask(selectedDate, task)}
-                        title="Remove task (Boss Mode)"
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
-                    )}
-                  </li>
-                );
-              })}
-              {tasks.length === 0 ? (
-                <li className="rounded-lg border border-dashed border-border py-12 text-center text-sm text-muted-foreground">
-                  Nothing scheduled for this day.
-                </li>
-              ) : null}
-            </ul>
-
-            {admin.isAdmin ? (
-              <form
-                className="mt-6 flex flex-col gap-2.5 sm:flex-row border-t border-border/70 pt-5"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  store.scheduleTask(selectedDate, newTask, newPriority);
-                  setNewTask("");
-                  setNewPriority(DEFAULT_PRIORITY);
-                }}
-              >
-                <Input
-                  value={newTask}
-                  onChange={(event) => setNewTask(event.target.value)}
-                  placeholder="Add a task to this day..."
-                  className="h-10 min-w-0 flex-1"
-                />
-                <div className="flex gap-2 shrink-0">
-                  <Select
-                    value={newPriority}
-                    onValueChange={(value) => setNewPriority(value as Priority)}
-                  >
-                    <SelectTrigger className="h-10 w-32 shrink-0">
-                      <SelectValue placeholder="Priority" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PRIORITY_OPTIONS.map((option) => (
-                        <SelectItem key={option} value={option}>
-                          <span className="flex items-center gap-2">
-                            <span className={cn("size-2 rounded-full", PRIORITY_STYLES[option].dot)} />
-                            {PRIORITY_STYLES[option].label}
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button type="submit" className="h-10 shrink-0" disabled={!newTask.trim()}>
-                    <Plus className="size-4" /> Add
-                  </Button>
+          {/* Right Main Column (Tasks + Shift Notes) */}
+          <div className="space-y-6">
+            {/* Task List Section */}
+            <section className="rounded-xl border border-border bg-card p-5 sm:p-6 shadow-panel">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 pb-4">
+                <div>
+                  <h2 className="font-display text-2xl sm:text-3xl font-semibold uppercase tracking-wide">
+                    {selectedDate === today
+                      ? "Today"
+                      : selected.toLocaleDateString(undefined, { weekday: "long" })}
+                  </h2>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    {selected.toLocaleDateString(undefined, {
+                      weekday: "long",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </p>
                 </div>
-              </form>
-            ) : (
-              <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed border-border/80 bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
-                <p className="flex items-center gap-1.5 font-medium">
-                  <Lock className="size-3.5 text-muted-foreground/80" />
-                  Adding and removing daily tasks is restricted to supervisors.
-                </p>
-                <AdminModal
-                  trigger={
-                    <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5 font-medium">
-                      <KeyRound className="size-3" /> Unlock Boss Mode
-                    </Button>
-                  }
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => store.clearDay(selectedDate)}
+                  disabled={stats.done === 0}
+                >
+                  <RotateCcw className="size-3.5" /> Uncheck all
+                </Button>
+              </div>
+
+              <div className="mt-4">
+                <div className="flex items-center justify-between text-xs sm:text-sm">
+                  <span className="font-semibold text-muted-foreground uppercase tracking-wider text-[11px]">
+                    Daily Progress
+                  </span>
+                  <span className="tabular-nums font-medium text-foreground">
+                    {stats.done} of {stats.total} complete
+                  </span>
+                </div>
+                <Progress
+                  value={stats.total ? (stats.done / stats.total) * 100 : 0}
+                  className="mt-2 h-2"
                 />
               </div>
-            )}
-          </section>
+
+              <ul className="mt-5 space-y-1.5">
+                {tasks.map((task) => {
+                  const key = completionKey(selectedDate, task);
+                  const done = store.state.completed[key];
+                  const priority = store.priorityOf(task);
+                  const pStyle = PRIORITY_STYLES[priority];
+                  return (
+                    <li
+                      key={key}
+                      className={cn(
+                        "group flex items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 transition-colors",
+                        done ? "bg-muted/40 text-muted-foreground" : "hover:bg-muted/50 hover:border-border/50",
+                      )}
+                    >
+                      <Checkbox
+                        id={key}
+                        checked={Boolean(done)}
+                        onCheckedChange={() => handleToggleTask(task, Boolean(done))}
+                        className="size-5 shrink-0"
+                      />
+                      <label
+                        htmlFor={key}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleToggleTask(task, Boolean(done));
+                        }}
+                        className="flex min-w-0 flex-1 cursor-pointer flex-col justify-center select-none"
+                      >
+                        <span
+                          className={cn(
+                            "text-sm font-medium leading-snug break-words",
+                            done && "line-through decoration-primary/60 opacity-80",
+                          )}
+                        >
+                          {task}
+                        </span>
+                        {done ? (
+                          <span className="mt-0.5 flex items-center gap-1 text-[11px] text-primary">
+                            <CheckCircle2 className="size-3 shrink-0" />
+                            <span className="font-semibold">{done.by}</span>
+                            {" · "}
+                            {new Date(done.at).toLocaleString(undefined, {
+                              month: "short",
+                              day: "numeric",
+                              hour: "numeric",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        ) : null}
+                      </label>
+                      <span
+                        className="flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-border bg-background px-2.5 text-[11px] font-medium text-muted-foreground shadow-2xs"
+                        title={`Priority: ${pStyle.label}`}
+                      >
+                        <span className={cn("size-2 rounded-full", pStyle.dot)} />
+                        <span className="hidden xs:inline">{pStyle.label}</span>
+                      </span>
+                      {admin.isAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Remove ${task}`}
+                          className="size-8 shrink-0 text-muted-foreground opacity-60 transition-opacity hover:opacity-100 hover:text-destructive"
+                          onClick={() => store.unscheduleTask(selectedDate, task)}
+                          title="Remove task (Boss Mode)"
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      )}
+                    </li>
+                  );
+                })}
+                {tasks.length === 0 ? (
+                  <li className="rounded-lg border border-dashed border-border py-12 text-center text-sm text-muted-foreground">
+                    Nothing scheduled for this day.
+                  </li>
+                ) : null}
+              </ul>
+
+              {admin.isAdmin ? (
+                <form
+                  className="mt-6 flex flex-col gap-2.5 sm:flex-row border-t border-border/70 pt-5"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    store.scheduleTask(selectedDate, newTask, newPriority);
+                    setNewTask("");
+                    setNewPriority(DEFAULT_PRIORITY);
+                  }}
+                >
+                  <Input
+                    value={newTask}
+                    onChange={(event) => setNewTask(event.target.value)}
+                    placeholder="Add a task to this day..."
+                    className="h-10 min-w-0 flex-1"
+                  />
+                  <div className="flex gap-2 shrink-0">
+                    <Select
+                      value={newPriority}
+                      onValueChange={(value) => setNewPriority(value as Priority)}
+                    >
+                      <SelectTrigger className="h-10 w-32 shrink-0">
+                        <SelectValue placeholder="Priority" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PRIORITY_OPTIONS.map((option) => (
+                          <SelectItem key={option} value={option}>
+                            <span className="flex items-center gap-2">
+                              <span className={cn("size-2 rounded-full", PRIORITY_STYLES[option].dot)} />
+                              {PRIORITY_STYLES[option].label}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button type="submit" className="h-10 shrink-0" disabled={!newTask.trim()}>
+                      <Plus className="size-4" /> Add
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed border-border/80 bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
+                  <p className="flex items-center gap-1.5 font-medium">
+                    <Lock className="size-3.5 text-muted-foreground/80" />
+                    Adding and removing daily tasks is restricted to supervisors.
+                  </p>
+                  <AdminModal
+                    trigger={
+                      <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5 font-medium">
+                        <KeyRound className="size-3" /> Unlock Boss Mode
+                      </Button>
+                    }
+                  />
+                </div>
+              )}
+            </section>
+
+            {/* Crew Shift Notes & Passdown Section */}
+            <CrewNotesSection
+              selectedDate={selectedDate}
+              crewName={store.state.crew}
+              isAdmin={admin.isAdmin}
+              notes={store.notesForDay(selectedDate)}
+              onAddNote={store.addNote}
+              onDeleteNote={store.deleteNote}
+              onTogglePin={store.togglePinNote}
+              onRequireCrewFocus={() => {
+                setCrewWarning(true);
+                crewInputRef.current?.focus();
+              }}
+            />
+          </div>
         </div>
       </main>
 

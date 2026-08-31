@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { BookOpen, CalendarDays, Lock, Repeat, ShieldCheck, TreePine } from "lucide-react";
+import { BookOpen, CalendarDays, Camera, Lock, Repeat, ShieldCheck, TreePine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAdmin } from "@/lib/admin-store";
 import { AdminModal } from "@/components/AdminModal";
@@ -46,18 +46,32 @@ export function SiteHeader({
               <span className="sm:hidden">Board</span>
             </Link>
             {admin.isAdmin && (
-              <Link
-                to="/library"
-                className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors ${
-                  currentPath === "/library"
-                    ? "bg-secondary text-secondary-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                <BookOpen className="size-3.5" />
-                <span className="hidden sm:inline">Task Library</span>
-                <span className="sm:hidden">Library</span>
-              </Link>
+              <>
+                <Link
+                  to="/library"
+                  className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors ${
+                    currentPath === "/library"
+                      ? "bg-secondary text-secondary-foreground"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  <BookOpen className="size-3.5" />
+                  <span className="hidden sm:inline">Task Library</span>
+                  <span className="sm:hidden">Library</span>
+                </Link>
+                <Link
+                  to="/photos"
+                  className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors ${
+                    currentPath === "/photos"
+                      ? "bg-secondary text-secondary-foreground"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  <Camera className="size-3.5" />
+                  <span className="hidden sm:inline">Photo Log</span>
+                  <span className="sm:hidden">Photos</span>
+                </Link>
+              </>
             )}
           </nav>
 
