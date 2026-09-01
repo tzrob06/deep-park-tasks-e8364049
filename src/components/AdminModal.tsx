@@ -280,10 +280,7 @@ export function AdminModal({
               ) : (
                 <form onSubmit={handleCrewLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="crew-password">Crew Passcode</Label>
-                      <span className="text-[11px] text-muted-foreground">Default: deep1234</span>
-                    </div>
+                    <Label htmlFor="crew-password">Crew Passcode</Label>
                     <div className="relative">
                       <Input
                         id="crew-password"
@@ -293,7 +290,7 @@ export function AdminModal({
                           setCrewPasswordInput(e.target.value);
                           setLoginError(false);
                         }}
-                        placeholder="Enter crew password (e.g. deep1234)..."
+                        placeholder="Enter crew passcode..."
                         className="pr-10 h-10 text-base sm:text-sm"
                         autoCapitalize="none"
                         autoCorrect="off"
@@ -340,10 +337,7 @@ export function AdminModal({
             <TabsContent value="boss" className="space-y-4 pt-1">
               <form onSubmit={handleBossLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="boss-password">Supervisor / Boss Passcode</Label>
-                    <span className="text-[11px] text-muted-foreground">Default: deepadmin</span>
-                  </div>
+                  <Label htmlFor="boss-password">Supervisor / Boss Passcode</Label>
                   <div className="relative">
                     <Input
                       id="boss-password"
@@ -353,7 +347,7 @@ export function AdminModal({
                         setBossPasswordInput(e.target.value);
                         setLoginError(false);
                       }}
-                      placeholder="Enter supervisor password..."
+                      placeholder="Enter supervisor passcode..."
                       className="pr-10 h-10 text-base sm:text-sm"
                       autoCapitalize="none"
                       autoCorrect="off"

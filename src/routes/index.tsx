@@ -151,27 +151,7 @@ function TaskBoard({
               )}
             </div>
 
-            {admin.isViewer ? (
-              <div className="flex items-center gap-2 sm:max-w-xs w-full">
-                <div className="flex items-center justify-between gap-2 w-full rounded-lg border border-border/80 bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1.5">
-                    <Lock className="size-3.5 text-muted-foreground/80 shrink-0" />
-                    <span>View-Only Spectator</span>
-                  </span>
-                  <AdminModal
-                    initialLoginTab="crew"
-                    trigger={
-                      <button
-                        type="button"
-                        className="font-semibold text-primary hover:underline cursor-pointer"
-                      >
-                        Sign In
-                      </button>
-                    }
-                  />
-                </div>
-              </div>
-            ) : (
+            {!admin.isViewer && (
               <div className="flex items-center gap-2 sm:max-w-xs w-full">
                 <label
                   htmlFor="crew"
