@@ -421,7 +421,7 @@ export function AdminModal({
 
                     return (
                       <div key={park.id} className="pt-3 first:pt-0 space-y-2">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-2.5">
                           <div className="flex-1 space-y-1">
                             <Label className="text-[11px] text-muted-foreground font-medium">
                               Park Name
@@ -457,24 +457,20 @@ export function AdminModal({
                           </div>
 
                           {parks.parks.length > 1 && (
-                            <div className="pt-5">
+                            <div className="flex justify-end sm:block">
                               <Button
+                                type="button"
                                 variant="ghost"
-                                size="icon"
-                                title="Delete park"
-                                className="size-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                size="sm"
+                                title={`Delete ${park.name}`}
+                                className="h-9 px-2.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 gap-1.5 text-xs shrink-0"
                                 onClick={() => {
-                                  if (
-                                    confirm(
-                                      `Are you sure you want to delete "${park.name}" and all its task data?`,
-                                    )
-                                  ) {
-                                    parks.deletePark(park.id);
-                                    toast.info(`Deleted park "${park.name}"`);
-                                  }
+                                  parks.removePark(park.id);
+                                  toast.info(`Deleted park "${park.name}"`);
                                 }}
                               >
-                                <Trash2 className="size-4" />
+                                <Trash2 className="size-4 text-destructive" />
+                                <span className="sm:hidden">Delete Park</span>
                               </Button>
                             </div>
                           )}

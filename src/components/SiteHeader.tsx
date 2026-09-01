@@ -17,67 +17,77 @@ export function SiteHeader({
 
   return (
     <header className="sticky top-0 z-30 border-b border-border/70 bg-background/85 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4">
-        <Link to="/" className="flex items-center gap-3">
-          <span className="flex size-9 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-2xs">
-            <TreePine className="size-5" />
+      <div className="mx-auto flex h-14 sm:h-16 max-w-6xl items-center justify-between gap-2 px-3 sm:px-4">
+        <Link to="/" className="flex items-center gap-2 min-w-0 shrink">
+          <span className="flex size-8 sm:size-9 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-2xs shrink-0">
+            <TreePine className="size-4 sm:size-5" />
           </span>
-          <span className="leading-tight">
-            <span className="block font-display text-lg font-semibold uppercase tracking-wide">
+          <span className="leading-tight min-w-0">
+            <span className="block font-display text-sm sm:text-lg font-semibold uppercase tracking-wide truncate">
               {admin.config.siteTitle}
             </span>
-            <span className="block text-xs text-muted-foreground">
+            <span className="hidden sm:block text-xs text-muted-foreground truncate">
               {parkLabel ?? "Park maintenance task board"}
             </span>
           </span>
         </Link>
 
-        <div className="flex items-center gap-2">
-          <nav className="flex items-center gap-1 sm:mr-1">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          <nav className="flex items-center gap-1">
             <Link
               to="/"
-              className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors ${
+              title="Daily Board"
+              aria-label="Daily Board"
+              className={`inline-flex items-center justify-center gap-1.5 rounded-md p-1.5 sm:px-2.5 sm:py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors ${
                 currentPath === "/"
                   ? "bg-secondary text-secondary-foreground"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
             >
-              <CalendarDays className="size-3.5" />
+              <CalendarDays className="size-4 sm:size-3.5" />
               <span className="hidden sm:inline">Daily Board</span>
-              <span className="sm:hidden">Board</span>
             </Link>
             {admin.isAdmin && (
               <>
                 <Link
                   to="/library"
-                  className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors ${
+                  title="Task Library"
+                  aria-label="Task Library"
+                  className={`inline-flex items-center justify-center gap-1.5 rounded-md p-1.5 sm:px-2.5 sm:py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors ${
                     currentPath === "/library"
                       ? "bg-secondary text-secondary-foreground"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
                 >
-                  <BookOpen className="size-3.5" />
+                  <BookOpen className="size-4 sm:size-3.5" />
                   <span className="hidden sm:inline">Task Library</span>
-                  <span className="sm:hidden">Library</span>
                 </Link>
                 <Link
                   to="/photos"
-                  className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors ${
+                  title="Photo Log"
+                  aria-label="Photo Log"
+                  className={`inline-flex items-center justify-center gap-1.5 rounded-md p-1.5 sm:px-2.5 sm:py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors ${
                     currentPath === "/photos"
                       ? "bg-secondary text-secondary-foreground"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
                 >
-                  <Camera className="size-3.5" />
+                  <Camera className="size-4 sm:size-3.5" />
                   <span className="hidden sm:inline">Photo Log</span>
-                  <span className="sm:hidden">Photos</span>
                 </Link>
               </>
             )}
           </nav>
 
           {onSwitchPark ? (
-            <Button variant="outline" size="sm" onClick={onSwitchPark} className="h-8 gap-1.5 text-xs">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onSwitchPark}
+              title="Switch park"
+              aria-label="Switch park"
+              className="h-8 px-2 sm:px-2.5 gap-1.5 text-xs"
+            >
               <Repeat className="size-3.5" />
               <span className="hidden sm:inline">Switch park</span>
             </Button>
@@ -85,7 +95,7 @@ export function SiteHeader({
 
           {/* Role Status and Login / Admin Actions */}
           {admin.isViewer ? (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1 sm:gap-1.5">
               <span className="hidden md:inline-flex items-center gap-1 rounded-md bg-muted/60 border border-border px-2 py-1 text-[11px] font-medium text-muted-foreground">
                 <Eye className="size-3 text-muted-foreground/80" /> View-Only
               </span>
@@ -95,18 +105,22 @@ export function SiteHeader({
                   <Button
                     variant="default"
                     size="sm"
-                    className="h-8 gap-1.5 text-xs font-semibold shadow-xs"
-                    title="Sign in as Crew or Supervisor"
+                    className="h-8 px-2.5 sm:px-3 gap-1.5 text-xs font-semibold shadow-xs"
+                    title="Sign In (Crew or Boss)"
+                    aria-label="Sign In"
                   >
                     <KeyRound className="size-3.5" />
-                    <span>Sign In</span>
+                    <span className="hidden sm:inline">Sign In</span>
                   </Button>
                 }
               />
             </div>
           ) : admin.isCrew && !admin.isAdmin ? (
-            <div className="flex items-center gap-1.5">
-              <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 border border-amber-500/30 px-2 py-1 text-xs font-semibold text-amber-700 dark:text-amber-400">
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              <span
+                className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 border border-amber-500/30 p-1.5 sm:px-2 sm:py-1 text-xs font-semibold text-amber-700 dark:text-amber-400"
+                title="Signed in as Crew"
+              >
                 <HardHat className="size-3.5" />
                 <span className="hidden sm:inline">Crew Mode</span>
               </span>
@@ -116,8 +130,9 @@ export function SiteHeader({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 gap-1 text-xs text-muted-foreground hover:text-foreground"
-                    title="Supervisor / Boss Login"
+                    className="h-8 px-2 sm:px-2.5 gap-1 text-xs text-muted-foreground hover:text-foreground"
+                    title="Unlock Boss Mode"
+                    aria-label="Unlock Boss Mode"
                   >
                     <Lock className="size-3.5" />
                     <span className="hidden md:inline">Boss</span>
@@ -129,6 +144,7 @@ export function SiteHeader({
                 size="icon"
                 className="size-8 text-muted-foreground hover:text-destructive"
                 title="Sign out to View-Only"
+                aria-label="Sign out"
                 onClick={() => {
                   admin.logout();
                   toast.info("Logged out. Returned to View-Only mode.");
@@ -138,19 +154,19 @@ export function SiteHeader({
               </Button>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1 sm:gap-1.5">
               <AdminModal
                 defaultTab="parks"
                 trigger={
                   <Button
                     variant="default"
                     size="sm"
-                    className="h-8 gap-1.5 text-xs bg-primary text-primary-foreground font-semibold shadow-xs"
+                    className="h-8 px-2.5 sm:px-3 gap-1.5 text-xs bg-primary text-primary-foreground font-semibold shadow-xs"
                     title="Supervisor Boss Control Panel"
+                    aria-label="Supervisor Boss Control Panel"
                   >
                     <ShieldCheck className="size-3.5 text-primary-foreground" />
                     <span className="hidden sm:inline">Boss Panel</span>
-                    <span className="sm:hidden">Boss</span>
                   </Button>
                 }
               />
@@ -159,6 +175,7 @@ export function SiteHeader({
                 size="icon"
                 className="size-8 text-muted-foreground hover:text-destructive"
                 title="Sign out to View-Only"
+                aria-label="Sign out"
                 onClick={() => {
                   admin.logout();
                   toast.info("Logged out of Boss Mode.");

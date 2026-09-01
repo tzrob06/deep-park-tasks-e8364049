@@ -163,6 +163,7 @@ export function useParks() {
     select,
     addPark,
     removePark,
+    deletePark: removePark,
     renamePark,
     nameFor,
   };

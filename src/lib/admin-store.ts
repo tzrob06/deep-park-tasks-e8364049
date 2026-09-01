@@ -31,10 +31,6 @@ export const DEFAULT_CONFIG: AdminConfig = {
       subtitle: "A Connecticut State Park",
       tag: "Southbury / Oxford, CT",
     },
-    putnam: {
-      subtitle: "A Connecticut State Park",
-      tag: "Redding, CT",
-    },
   },
 };
 
