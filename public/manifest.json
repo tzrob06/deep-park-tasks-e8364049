@@ -4,8 +4,8 @@
   "description": "Park maintenance calendar for CT DEEP crews",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#172b21",
-  "theme_color": "#1e3a2f",
+  "background_color": "#08b26b",
+  "theme_color": "#08b26b",
   "icons": [
     {
       "src": "/icon-192.png",
