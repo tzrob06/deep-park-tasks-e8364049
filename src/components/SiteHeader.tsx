@@ -19,11 +19,9 @@ export function SiteHeader({
     <header className="sticky top-0 z-30 border-b border-border/70 bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-14 sm:h-16 max-w-6xl items-center justify-between gap-2 px-3 sm:px-4">
         <Link to="/" className="flex items-center gap-2 min-w-0 shrink">
-          <img
-            src="/apple-touch-icon.png"
-            alt="DEEP Logo"
-            className="size-8 sm:size-9 rounded-md shadow-2xs shrink-0 object-contain"
-          />
+          <span className="flex size-8 sm:size-9 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-2xs shrink-0">
+            <TreePine className="size-4 sm:size-5" />
+          </span>
           <span className="leading-tight min-w-0">
             <span className="block font-display text-sm sm:text-lg font-semibold uppercase tracking-wide truncate">
               {admin.config.siteTitle}
