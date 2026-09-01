@@ -1,8 +1,9 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { BookOpen, CalendarDays, Camera, Lock, Repeat, ShieldCheck, TreePine } from "lucide-react";
+import { BookOpen, CalendarDays, Camera, Eye, HardHat, KeyRound, Lock, LogOut, Repeat, ShieldCheck, TreePine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAdmin } from "@/lib/admin-store";
 import { AdminModal } from "@/components/AdminModal";
+import { toast } from "sonner";
 
 export function SiteHeader({
   parkLabel,
@@ -82,34 +83,91 @@ export function SiteHeader({
             </Button>
           ) : null}
 
-          <AdminModal
-            trigger={
+          {/* Role Status and Login / Admin Actions */}
+          {admin.isViewer ? (
+            <div className="flex items-center gap-1.5">
+              <span className="hidden md:inline-flex items-center gap-1 rounded-md bg-muted/60 border border-border px-2 py-1 text-[11px] font-medium text-muted-foreground">
+                <Eye className="size-3 text-muted-foreground/80" /> View-Only
+              </span>
+              <AdminModal
+                initialLoginTab="crew"
+                trigger={
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="h-8 gap-1.5 text-xs font-semibold shadow-xs"
+                    title="Sign in as Crew or Supervisor"
+                  >
+                    <KeyRound className="size-3.5" />
+                    <span>Sign In</span>
+                  </Button>
+                }
+              />
+            </div>
+          ) : admin.isCrew && !admin.isAdmin ? (
+            <div className="flex items-center gap-1.5">
+              <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 border border-amber-500/30 px-2 py-1 text-xs font-semibold text-amber-700 dark:text-amber-400">
+                <HardHat className="size-3.5" />
+                <span className="hidden sm:inline">Crew Mode</span>
+              </span>
+              <AdminModal
+                initialLoginTab="boss"
+                trigger={
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-1 text-xs text-muted-foreground hover:text-foreground"
+                    title="Supervisor / Boss Login"
+                  >
+                    <Lock className="size-3.5" />
+                    <span className="hidden md:inline">Boss</span>
+                  </Button>
+                }
+              />
               <Button
-                variant={admin.isAdmin ? "default" : "outline"}
-                size="sm"
-                className={`h-8 gap-1.5 text-xs ${
-                  admin.isAdmin
-                    ? "bg-primary text-primary-foreground font-semibold shadow-xs"
-                    : "text-foreground hover:bg-muted"
-                }`}
-                title={admin.isAdmin ? "Supervisor Boss Control Panel" : "Boss / Supervisor Admin Access"}
+                variant="ghost"
+                size="icon"
+                className="size-8 text-muted-foreground hover:text-destructive"
+                title="Sign out to View-Only"
+                onClick={() => {
+                  admin.logout();
+                  toast.info("Logged out. Returned to View-Only mode.");
+                }}
               >
-                {admin.isAdmin ? (
-                  <>
+                <LogOut className="size-3.5" />
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <AdminModal
+                defaultTab="parks"
+                trigger={
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="h-8 gap-1.5 text-xs bg-primary text-primary-foreground font-semibold shadow-xs"
+                    title="Supervisor Boss Control Panel"
+                  >
                     <ShieldCheck className="size-3.5 text-primary-foreground" />
                     <span className="hidden sm:inline">Boss Panel</span>
                     <span className="sm:hidden">Boss</span>
-                  </>
-                ) : (
-                  <>
-                    <Lock className="size-3.5" />
-                    <span className="hidden sm:inline">Boss Admin</span>
-                    <span className="sm:hidden">Boss</span>
-                  </>
-                )}
+                  </Button>
+                }
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8 text-muted-foreground hover:text-destructive"
+                title="Sign out to View-Only"
+                onClick={() => {
+                  admin.logout();
+                  toast.info("Logged out of Boss Mode.");
+                }}
+              >
+                <LogOut className="size-3.5" />
               </Button>
-            }
-          />
+            </div>
+          )}
         </div>
       </div>
     </header>

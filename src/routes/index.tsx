@@ -99,6 +99,10 @@ function TaskBoard({
   const [crewWarning, setCrewWarning] = useState(false);
 
   const handleToggleTask = (task: string, isCurrentlyDone: boolean) => {
+    if (!admin.isCrew) {
+      toast.info("Viewing in Read-Only mode. Sign in as Crew to complete tasks.");
+      return;
+    }
     if (!isCurrentlyDone && !store.state.crew.trim()) {
       setCrewWarning(true);
       crewInputRef.current?.focus();
@@ -146,31 +150,54 @@ function TaskBoard({
                 />
               )}
             </div>
-            <div className="flex items-center gap-2 sm:max-w-xs w-full">
-              <label
-                htmlFor="crew"
-                className="shrink-0 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-              >
-                Crew on shift <span className="text-destructive font-bold" title="Required to complete tasks">*</span>:
-              </label>
-              <Input
-                ref={crewInputRef}
-                id="crew"
-                value={store.state.crew}
-                onChange={(event) => {
-                  store.setCrew(event.target.value);
-                  if (crewWarning && event.target.value.trim()) {
-                    setCrewWarning(false);
-                  }
-                }}
-                placeholder="Name / Initials (required)"
-                title="Your name or initials are required to complete tasks"
-                className={cn(
-                  "h-9 w-full transition-all",
-                  crewWarning && !store.state.crew.trim() && "border-destructive ring-2 ring-destructive/40 bg-destructive/5",
-                )}
-              />
-            </div>
+
+            {admin.isViewer ? (
+              <div className="flex items-center gap-2 sm:max-w-xs w-full">
+                <div className="flex items-center justify-between gap-2 w-full rounded-lg border border-border/80 bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1.5">
+                    <Lock className="size-3.5 text-muted-foreground/80 shrink-0" />
+                    <span>View-Only Spectator</span>
+                  </span>
+                  <AdminModal
+                    initialLoginTab="crew"
+                    trigger={
+                      <button
+                        type="button"
+                        className="font-semibold text-primary hover:underline cursor-pointer"
+                      >
+                        Sign In
+                      </button>
+                    }
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 sm:max-w-xs w-full">
+                <label
+                  htmlFor="crew"
+                  className="shrink-0 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                >
+                  Crew on shift <span className="text-destructive font-bold" title="Required to complete tasks">*</span>:
+                </label>
+                <Input
+                  ref={crewInputRef}
+                  id="crew"
+                  value={store.state.crew}
+                  onChange={(event) => {
+                    store.setCrew(event.target.value);
+                    if (crewWarning && event.target.value.trim()) {
+                      setCrewWarning(false);
+                    }
+                  }}
+                  placeholder="Name / Initials (required)"
+                  title="Your name or initials are required to complete tasks"
+                  className={cn(
+                    "h-9 w-full transition-all",
+                    crewWarning && !store.state.crew.trim() && "border-destructive ring-2 ring-destructive/40 bg-destructive/5",
+                  )}
+                />
+              </div>
+            )}
           </div>
         </section>
 
@@ -281,14 +308,16 @@ function TaskBoard({
                     })}
                   </p>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => store.clearDay(selectedDate)}
-                  disabled={stats.done === 0}
-                >
-                  <RotateCcw className="size-3.5" /> Uncheck all
-                </Button>
+                {admin.isCrew && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => store.clearDay(selectedDate)}
+                    disabled={stats.done === 0}
+                  >
+                    <RotateCcw className="size-3.5" /> Uncheck all
+                  </Button>
+                )}
               </div>
 
               <div className="mt-4">
@@ -323,8 +352,9 @@ function TaskBoard({
                       <Checkbox
                         id={key}
                         checked={Boolean(done)}
+                        disabled={!admin.isCrew}
                         onCheckedChange={() => handleToggleTask(task, Boolean(done))}
-                        className="size-5 shrink-0"
+                        className={cn("size-5 shrink-0", !admin.isCrew && "opacity-80")}
                       />
                       <label
                         htmlFor={key}
@@ -332,7 +362,10 @@ function TaskBoard({
                           e.preventDefault();
                           handleToggleTask(task, Boolean(done));
                         }}
-                        className="flex min-w-0 flex-1 cursor-pointer flex-col justify-center select-none"
+                        className={cn(
+                          "flex min-w-0 flex-1 flex-col justify-center select-none",
+                          admin.isCrew ? "cursor-pointer" : "cursor-default",
+                        )}
                       >
                         <span
                           className={cn(
@@ -425,16 +458,32 @@ function TaskBoard({
                     </Button>
                   </div>
                 </form>
+              ) : admin.isCrew ? (
+                <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed border-border/80 bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
+                  <p className="flex items-center gap-1.5 font-medium">
+                    <Lock className="size-3.5 text-muted-foreground/80" />
+                    Adding and removing scheduled tasks is restricted to supervisors.
+                  </p>
+                  <AdminModal
+                    initialLoginTab="boss"
+                    trigger={
+                      <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5 font-medium">
+                        <KeyRound className="size-3" /> Unlock Boss Mode
+                      </Button>
+                    }
+                  />
+                </div>
               ) : (
                 <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed border-border/80 bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
                   <p className="flex items-center gap-1.5 font-medium">
                     <Lock className="size-3.5 text-muted-foreground/80" />
-                    Adding and removing daily tasks is restricted to supervisors.
+                    Viewing in Read-Only mode. Sign in to check off tasks or submit reports.
                   </p>
                   <AdminModal
+                    initialLoginTab="crew"
                     trigger={
-                      <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5 font-medium">
-                        <KeyRound className="size-3" /> Unlock Boss Mode
+                      <Button variant="default" size="sm" className="h-7 text-xs gap-1.5 font-medium">
+                        <KeyRound className="size-3" /> Sign In (Crew / Boss)
                       </Button>
                     }
                   />
@@ -447,6 +496,7 @@ function TaskBoard({
               selectedDate={selectedDate}
               crewName={store.state.crew}
               isAdmin={admin.isAdmin}
+              isCrew={admin.isCrew}
               notes={store.notesForDay(selectedDate)}
               onAddNote={store.addNote}
               onDeleteNote={store.deleteNote}

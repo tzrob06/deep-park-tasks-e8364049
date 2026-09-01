@@ -59,6 +59,7 @@ function LibraryPage() {
             </p>
             <div className="pt-2">
               <AdminModal
+                initialLoginTab="boss"
                 trigger={
                   <Button className="w-full gap-2">
                     <KeyRound className="size-4" /> Unlock Boss Mode
