@@ -16,9 +16,11 @@ export function ParkPicker({
       <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-panel">
         <div className="flex items-center justify-between border-b border-border/70 pb-5">
           <div className="flex items-center gap-3">
-            <span className="flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
-              <TreePine className="size-6" />
-            </span>
+            <img
+              src="/apple-touch-icon.png"
+              alt="DEEP Logo"
+              className="size-11 rounded-xl shadow-xs object-contain"
+            />
             <div className="leading-tight">
               <h1 className="font-display text-2xl font-bold uppercase tracking-wide text-foreground">
                 {admin.config.siteTitle}
