@@ -2,6 +2,8 @@
 
 A centralized operational web application designed for Department of Energy and Environmental Protection (DEEP) personnel to streamline park maintenance, track field tasks, facilitate crew communications, and maintain infrastructure across state park facilities.
 
+*Developed with [Lovable](https://lovable.dev).*
+
 ---
 
 ## Table of Contents
@@ -16,7 +18,7 @@ A centralized operational web application designed for Department of Energy and 
   - [Running the Application](#running-the-application)
 - [Available Scripts](#available-scripts)
 - [Configuration & Environment](#configuration--environment)
-- [Integration & Development](#integration--development)
+- [Development](#development)
 
 ---
 
@@ -140,8 +142,6 @@ By default, the application will initialize and serve at `http://localhost:8080`
 
 ---
 
-## Integration & Development
+## Development
 
-This project is integrated with [Lovable](https://lovable.dev/projects/e670f571-1b66-47d9-aa98-5950ce3b5ca6). 
-
-Changes pushed to the `main` branch automatically synchronize with the Lovable development environment. Ensure all commits maintain a clean build status and adhere to repository formatting standards.
+This application was developed with [Lovable](https://lovable.dev).
